@@ -237,6 +237,17 @@ body.fuel #pFuel{display:flex}
 .app-footer{margin-top:auto;padding:28px 4px 4px;text-align:center;font-family:var(--mono);font-size:10px;color:#2a3548;line-height:1.8;border-top:1px solid var(--line)}
 .app-footer a{color:#3a5a7a;text-decoration:none}
 .app-footer a:hover{text-decoration:underline}
+
+/* ── system alarm helper modal ──── */
+.sys-modal{position:fixed;inset:0;background:rgba(8,12,20,.96);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:70;text-align:center;padding:24px}
+.sys-modal.on{display:flex}
+.sm-title{font-family:var(--mono);font-size:13px;letter-spacing:.2em;color:var(--dim)}
+.sm-time{font-family:var(--mono);font-size:84px;font-weight:700;color:var(--amber);margin:18px 0 6px;text-shadow:0 0 30px rgba(255,179,0,.3)}
+.sm-label{font-family:var(--mono);font-size:14px;color:var(--text);margin-bottom:8px}
+.sm-guide{font-size:13px;color:var(--dim);line-height:1.8;margin-bottom:30px}
+.sm-guide b{color:var(--text)}
+.sys-modal .btn{max-width:300px}
+.sys-modal .btn+.btn{margin-top:10px}
 </style>
 </head>
 <body>
@@ -388,6 +399,19 @@ body.fuel #pFuel{display:flex}
     <p>Contact & Inquiry: <a href="mailto:moonsikyim@gmail.com">moonsikyim@gmail.com</a></p>
   </footer>
 
+</div>
+
+<!-- SYSTEM ALARM HELPER -->
+<div class="sys-modal" id="sysModal">
+  <div class="sm-title">⏰ 시스템 알람으로 설정하세요</div>
+  <div class="sm-time" id="smTime">00:00</div>
+  <div class="sm-label" id="smLabel"></div>
+  <div class="sm-guide">
+    브라우저 보안 정책상 웹앱이 시계 앱에 알람을<br>직접 등록할 수 없습니다.<br>
+    <b>시계 앱을 열고 위 시각으로 알람을 추가</b>해 주세요.
+  </div>
+  <button class="btn btn-arm" id="smOpenClock">시계 앱 열기 시도</button>
+  <button class="btn btn-ghost" id="smClose">닫기 (시각 확인함)</button>
 </div>
 
 <!-- ALARM OVERLAY -->
@@ -623,7 +647,6 @@ function buildCdList(){
 
 /* ───────── 시스템 알람 설정 ───────── */
 function triggerIntent(url){
-  // Chrome은 <a> 태그 클릭으로만 intent:// 허용
   const a=document.createElement('a');
   a.href=url;
   a.style.display='none';
@@ -632,51 +655,48 @@ function triggerIntent(url){
   setTimeout(()=>a.remove(),100);
 }
 
+let sysModalIdx=null;
 function setSystemAlarm(idx,hh,mm){
-  const btn=$('sys'+idx);
+  sysModalIdx=idx;
+  $('smTime').textContent=`${pad(hh)}:${pad(mm)}`;
+  $('smLabel').textContent=`T${idx+1} 알람 · T/O Timer`;
+  $('sysModal').classList.add('on');
+  // 시각 자동 복사 (붙여넣기 편의)
+  navigator.clipboard?.writeText(`${pad(hh)}:${pad(mm)}`).catch(()=>{});
+  // intent 시도는 백그라운드로 (일부 기기/브라우저에서는 동작함)
   const isAndroid=/android/i.test(navigator.userAgent);
-  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-
   if(isAndroid){
     const msg=encodeURIComponent(`T/O Timer T${idx+1}`);
-    // 방법 1: SET_ALARM intent
-    const intent=`intent:#Intent;action=android.intent.action.SET_ALARM;`
+    triggerIntent(`intent:#Intent;action=android.intent.action.SET_ALARM;`
       +`i.android.intent.extra.alarm.HOUR=${hh};`
       +`i.android.intent.extra.alarm.MINUTES=${mm};`
-      +`S.android.intent.extra.alarm.MESSAGE=${msg};`
-      +`B.android.intent.extra.alarm.SKIP_UI=false;end`;
-    triggerIntent(intent);
-    // 방법 2: 1.5초 후 시계 앱이 안 열렸으면 Google Clock 직접 열기
-    const t0=Date.now();
-    setTimeout(()=>{
-      if(Date.now()-t0<2000){
-        triggerIntent('intent:#Intent;package=com.google.android.deskclock;end');
-      }
-    },1500);
-    btn.classList.add('set');
-    btn.querySelector('.sys-lbl').textContent=`${pad(hh)}:${pad(mm)} 알람 설정 ✓`;
-    toast(`시계 앱에서 ${pad(hh)}:${pad(mm)} 알람을 확인하세요`);
-  } else if(isIOS){
-    const ok=confirm(
-      `iOS에서는 시계 앱에서 직접 설정해야 합니다.\n\n`
-      +`알람 시각: ${pad(hh)}:${pad(mm)}\n`
-      +`라벨: T/O Timer T${idx+1}\n\n`
-      +`시계 앱을 열까요?`
-    );
-    if(ok){
-      triggerIntent('clock-alarm://');
-      setTimeout(()=>triggerIntent('clock://'),1200);
-      btn.classList.add('set');
-      btn.querySelector('.sys-lbl').textContent='시계 앱에서 확인 ✓';
-    }
-  } else {
-    navigator.clipboard?.writeText(`${pad(hh)}:${pad(mm)}`).then(()=>{
-      toast(`${pad(hh)}:${pad(mm)} 복사됨 — 시계 앱에서 알람을 설정하세요`);
-      btn.classList.add('set');
-      btn.querySelector('.sys-lbl').textContent='시각 복사됨 ✓';
-    });
+      +`S.android.intent.extra.alarm.MESSAGE=${msg};end`);
   }
 }
+
+$('smOpenClock').onclick=()=>{
+  const isAndroid=/android/i.test(navigator.userAgent);
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(isAndroid){
+    // 주요 시계 앱 패키지 순차 시도 (설치된 것이 열림)
+    triggerIntent('intent:#Intent;package=com.google.android.deskclock;end');
+    setTimeout(()=>triggerIntent('intent:#Intent;package=com.sec.android.app.clockpackage;end'),700);
+  }else if(isIOS){
+    triggerIntent('clock-alarm://');
+    setTimeout(()=>triggerIntent('clock://'),800);
+  }
+};
+$('smClose').onclick=()=>{
+  $('sysModal').classList.remove('on');
+  if(sysModalIdx!==null){
+    const btn=$('sys'+sysModalIdx);
+    if(btn){
+      btn.classList.add('set');
+      btn.querySelector('.sys-lbl').textContent='시각 확인됨 ✓';
+    }
+    sysModalIdx=null;
+  }
+};
 function tick(){
   const now=Date.now();
   const el=Math.floor((now-takeoffAt)/1000);
