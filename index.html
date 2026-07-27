@@ -602,7 +602,7 @@ function detectTakeoff(){
   $('tkoTime').textContent=`이륙 시각 ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   buildCdList();
   setPhase('air');
-  beep(2);  // 감지 확인음
+  // 감지 확인음 없음 (조용히 전환)
   sendNotif('✈ 이륙 감지됨',`알람 카운트다운이 시작되었습니다 (${pad(d.getHours())}:${pad(d.getMinutes())})`);
   // 백그라운드 안전망: setTimeout으로 예약
   scheduleNotifTimers();
