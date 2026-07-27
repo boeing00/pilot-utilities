@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>T/O TIMER — 이륙 감지 알람</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0F17; --panel:#121926; --panel2:#0E141F; --line:#22304A;
+  --amber:#FFB300; --amber-dim:#8a6200; --green:#4ADE80; --red:#FF5C5C;
+  --text:#E8EDF5; --dim:#7C8BA3;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans KR",-apple-system,system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--sans);
+  display:flex; justify-content:center; overscroll-behavior:none;
+}
+.app{width:100%;max-width:430px;min-height:100dvh;display:flex;flex-direction:column;padding:16px 16px 32px}
+
+/* ── header ─────────────────────── */
+header{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 14px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--mono);font-weight:700;font-size:17px;letter-spacing:.12em}
+.brand span{color:var(--amber)}
+.lamp{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--dim);margin:14px 2px 0}
+.lamp i{width:9px;height:9px;border-radius:50%;background:#3a465c;display:inline-block;transition:.3s}
+.lamp.armed i{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.lamp.airborne i{background:var(--green);box-shadow:0 0 8px var(--green)}
+
+/* ── phase panels ───────────────── */
+.phase{display:none;flex:1;flex-direction:column}
+.phase.on{display:flex}
+.sec-label{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--dim);margin:20px 2px 10px}
+
+/* ── timer rows ─────────────────── */
+.timer{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;transition:opacity .2s}
+.timer.off{opacity:.38}
+.t-num{font-family:var(--mono);font-size:12px;color:var(--dim);width:22px;flex-shrink:0}
+.wheels{display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
+.wheel-unit{display:flex;flex-direction:column;align-items:center;gap:3px}
+.wheel-cap{font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--dim)}
+/* drum-style wheel */
+.wheel{
+  height:108px;width:64px;overflow-y:scroll;scroll-snap-type:y mandatory;
+  border-radius:10px;background:linear-gradient(180deg,#080c13 0%,#141c2b 50%,#080c13 100%);
+  border:1px solid var(--line);position:relative;scrollbar-width:none;
+}
+.wheel::-webkit-scrollbar{display:none}
+.wheel .pad{height:36px}
+.wheel .item{
+  height:36px;display:flex;align-items:center;justify-content:center;
+  scroll-snap-align:center;font-family:var(--mono);font-size:20px;font-weight:500;
+  color:#55637d;
+}
+.wheel .item.sel{color:var(--amber);font-weight:700;text-shadow:0 0 10px rgba(255,179,0,.35)}
+.wheel-frame{position:relative}
+.wheel-frame::before,.wheel-frame::after{
+  content:"";position:absolute;left:4px;right:4px;height:1px;background:var(--line);pointer-events:none;z-index:2}
+.wheel-frame::before{top:36px}
+.wheel-frame::after{bottom:36px}
+.colon{font-family:var(--mono);font-size:20px;color:var(--dim);padding-top:14px}
+.tgl{width:44px;height:26px;border-radius:13px;background:#2a3550;border:none;position:relative;flex-shrink:0;cursor:pointer;transition:.2s}
+.tgl::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#8a97ad;transition:.2s}
+.tgl.on{background:var(--amber-dim)}
+.tgl.on::after{left:21px;background:var(--amber)}
+
+/* ── buttons ────────────────────── */
+.btn{
+  width:100%;border:none;border-radius:14px;padding:17px;font-family:var(--mono);
+  font-size:15px;font-weight:700;letter-spacing:.14em;cursor:pointer;transition:.15s;
+}
+.btn:active{transform:scale(.98)}
+.btn-arm{background:var(--amber);color:#1a1200;margin-top:14px}
+.btn-ghost{background:transparent;color:var(--dim);border:1px solid var(--line);margin-top:10px}
+.btn-red{background:var(--red);color:#2a0505}
+.hint{font-size:12px;color:var(--dim);text-align:center;margin-top:12px;line-height:1.6}
+
+/* ── monitoring ─────────────────── */
+.mon-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 18px;text-align:center;margin-top:18px}
+.mon-title{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--amber);animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.35}}
+.g-val{font-family:var(--mono);font-size:44px;font-weight:700;margin:14px 0 6px}
+.g-unit{font-size:14px;color:var(--dim);font-weight:400}
+.g-bar{height:10px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);overflow:hidden;margin:12px 0 6px}
+.g-fill{height:100%;width:0%;background:linear-gradient(90deg,#3d5a80,var(--amber));transition:width .12s}
+.g-thresh{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.hold-note{font-family:var(--mono);font-size:12px;color:var(--green);margin-top:10px;min-height:16px}
+.bright-tip{background:linear-gradient(135deg,#1a2030,#1e2a3c);border:1px solid var(--amber-dim);border-radius:12px;padding:14px 16px;margin-top:14px;display:flex;align-items:flex-start;gap:10px;line-height:1.55}
+.bright-tip .ico{font-size:22px;flex-shrink:0;margin-top:1px}
+.bright-tip .msg{font-size:12.5px;color:var(--text)}
+.bright-tip .msg b{color:var(--amber);font-weight:500}
+.bright-tip .dismiss-tip{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;margin-left:auto;flex-shrink:0;padding:0 2px}
+.notif-status{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;margin-top:8px;min-height:16px}
+
+/* ── airborne ───────────────────── */
+.air-head{text-align:center;margin-top:22px}
+.air-tag{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:#2d7a4a}
+.air-elapsed{font-family:var(--mono);font-size:52px;font-weight:700;margin-top:6px;color:#3a4a5c}
+.air-sub{font-size:12px;color:#2a3548;margin-top:2px}
+.cd{background:#0a0e15;border:1px solid #1a2336;border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.cd .lbl{font-family:var(--mono);font-size:12px;color:#2a3548}
+.cd .rem{font-family:var(--mono);font-size:26px;font-weight:700;color:#3a4a5c}
+.cd.done{border-color:#1a4a2a}
+.cd.done .rem{color:#2d7a4a}
+.cd.ringing{border-color:var(--red);animation:ring .5s infinite}
+.cd.ringing .rem{color:var(--red)}
+@keyframes ring{50%{background:#2a1216}}
+.cd-wrap{margin-bottom:10px}
+.cd-inner{display:flex;justify-content:space-between;align-items:center}
+.cd-clock{font-family:var(--mono);font-size:11px;color:#2a3548;margin-top:4px}
+.btn-sys{display:flex;align-items:center;gap:6px;width:100%;margin-top:8px;padding:10px 14px;border-radius:10px;border:1px dashed #1a2336;background:transparent;color:#3a4a5c;font-family:var(--mono);font-size:12px;cursor:pointer;transition:.15s}
+.btn-sys:active{background:#0a0e15}
+.btn-sys .sys-ico{font-size:16px}
+.btn-sys .sys-lbl{flex:1;text-align:left}
+.btn-sys .sys-time{color:#5a4a1a;font-weight:700;font-size:14px}
+.btn-sys.set{border-color:#1a4a2a;border-style:solid;opacity:.6}
+.btn-sys.set .sys-lbl{color:#2d7a4a}
+#pAir .sec-label{color:#2a3548}
+#pAir .btn-ghost{color:#2a3548;border-color:#1a2336}
+#pAir .lamp{opacity:.5}
+
+/* ── alarm overlay ──────────────── */
+.overlay{position:fixed;inset:0;background:rgba(180,20,20,.92);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:50;text-align:center;padding:24px}
+.overlay.on{display:flex;animation:flash .6s infinite}
+@keyframes flash{50%{background:rgba(120,8,8,.92)}}
+.ov-title{font-family:var(--mono);font-size:15px;letter-spacing:.25em;color:#ffd6d6}
+.ov-time{font-family:var(--mono);font-size:64px;font-weight:700;color:#fff;margin:14px 0}
+.ov-lbl{font-size:16px;color:#ffecec;margin-bottom:34px}
+.overlay .btn{max-width:280px;background:#fff;color:#7a0f0f}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 18px;font-size:13px;color:var(--text);display:none;z-index:60}
+
+/* ── tabs ───────────────────────── */
+.tabs{display:flex;gap:8px;margin-top:12px}
+.tab{flex:1;font-family:var(--mono);font-size:12px;letter-spacing:.1em;padding:11px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--dim);cursor:pointer;transition:.15s}
+.tab.on{background:var(--panel);color:var(--amber);border-color:var(--amber-dim)}
+body.calc .phase{display:none!important}
+#pCalc{display:none;flex-direction:column;flex:1}
+body.calc #pCalc{display:flex}
+body.wind .phase{display:none!important}
+#pWind{display:none;flex-direction:column;flex:1}
+body.wind #pWind{display:flex}
+body.fuel .phase{display:none!important}
+#pFuel{display:none;flex-direction:column;flex:1}
+body.fuel #pFuel{display:flex}
+
+/* ── calc inputs (소형 휠) ───────── */
+.calc-inputs{display:flex;gap:8px;margin-top:4px}
+.ci{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 6px;flex:1;display:flex;flex-direction:column;align-items:center;gap:7px}
+.ci-cap{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim);text-align:center;white-space:nowrap}
+.ci .wheels{gap:2px}
+.ci .wheel{width:42px;height:96px}
+.ci .wheel .item{font-size:15px;height:32px}
+.ci .wheel .pad{height:32px}
+.ci .wheel-frame::before{top:32px}
+.ci .wheel-frame::after{bottom:32px}
+.ci .colon{padding-top:0;font-size:15px}
+
+/* ── pattern cards ──────────────── */
+.pat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.pat h3{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--amber);margin-bottom:10px;font-weight:700}
+.bar{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--line);margin-bottom:10px}
+.bar div{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#0b0f17;min-width:0;overflow:hidden}
+.bar .bp1{background:var(--amber)}
+.bar .bp2{background:#5B9BD5}
+.bar .bp3{background:var(--green)}
+.bar .brest{background:#26314a;color:var(--dim)}
+.seg-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12.5px;padding:6px 2px;border-bottom:1px dashed var(--line)}
+.seg-row:last-of-type{border-bottom:none}
+.seg-row .who{color:var(--dim)}
+.lane{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.lane .lname{font-family:var(--mono);font-size:11px;color:var(--dim);width:22px;flex-shrink:0}
+.lane .bar{flex:1;margin-bottom:0;height:16px}
+.tot{font-size:11px;color:var(--dim);margin-top:9px;font-family:var(--mono)}
+.err{color:var(--red);font-size:12px;font-family:var(--mono);margin:10px 2px;line-height:1.6}
+
+/* ── wind calc ──────────────────── */
+.w-inputs{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.w-row{display:flex;gap:8px;align-items:stretch}
+.w-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 10px;flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
+.w-cap{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--dim);text-align:center}
+.w-field{display:flex;align-items:center;gap:4px}
+.w-input{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+  color:var(--amber);font-family:var(--mono);font-size:18px;font-weight:700;
+  text-align:center;width:62px;padding:8px 4px;outline:none;-moz-appearance:textfield}
+.w-input::-webkit-outer-spin-button,.w-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.w-input:focus{border-color:var(--amber)}
+.w-input.sm{font-size:15px;width:52px}
+.w-unit{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.w-sep{font-family:var(--mono);font-size:14px;color:var(--dim);padding:0 2px}
+
+/* result cards */
+.wr{background:var(--panel);border-radius:14px;border:1px solid var(--line);padding:16px;margin-bottom:12px}
+.wr h3{font-family:var(--mono);font-size:12px;letter-spacing:.12em;margin-bottom:12px;font-weight:700}
+.wr h3.fav{color:var(--green)}
+.wr h3.unfav{color:var(--red)}
+.wr-rwy{font-family:var(--mono);font-size:13px;color:var(--amber);margin-bottom:8px}
+.wr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wr-cell{text-align:center;padding:10px 6px;border-radius:10px;background:var(--panel2);border:1px solid var(--line)}
+.wr-val{font-family:var(--mono);font-size:22px;font-weight:700}
+.wr-val.green{color:var(--green)}
+.wr-val.red{color:var(--red)}
+.wr-val.blue{color:#5B9BD5}
+.wr-lbl{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:4px;letter-spacing:.05em}
+.wr-note{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5;font-family:var(--mono)}
+
+/* compass */
+.compass-wrap{display:flex;justify-content:center;margin:6px 0 10px}
+.compass{position:relative;width:180px;height:180px}
+.compass svg{width:100%;height:100%}
+
+/* ── fuel calc ──────────────────── */
+.f-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.f-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 10px;text-align:center}
+.f-card.wide{grid-column:1/-1}
+.f-card.emer{border-color:#6b2020}
+.f-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--dim);margin-bottom:6px}
+.f-val{font-family:var(--mono);font-size:24px;font-weight:700}
+.f-val.amber{color:var(--amber)}
+.f-val.red{color:var(--red)}
+.f-val.green{color:var(--green)}
+.f-val.blue{color:#5B9BD5}
+.f-sub{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:4px}
+.f-cost-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px}
+.f-cost-card h4{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--amber);margin-bottom:10px;font-weight:700}
+.f-cost-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.f-cost-row:last-of-type{border-bottom:none}
+.f-cost-row .fv{font-weight:700}
+.f-cost-row .fv.usd{color:var(--green)}
+.f-cost-row .fv.krw{color:#5B9BD5}
+.f-price-note{font-family:var(--mono);font-size:10px;color:#2a3548;margin:10px 4px 0;line-height:1.5}
+
+/* ── footer ─────────────────────── */
+.app-footer{margin-top:auto;padding:28px 4px 4px;text-align:center;font-family:var(--mono);font-size:10px;color:#2a3548;line-height:1.8;border-top:1px solid var(--line)}
+.app-footer a{color:#3a5a7a;text-decoration:none}
+.app-footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span>UTILITIES</span> FOR PILOT</div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab on" id="tabAlarm">⏰ ALARM</button>
+    <button class="tab" id="tabCalc">⇄ SHIFT</button>
+    <button class="tab" id="tabWind">💨 WIND</button>
+    <button class="tab" id="tabFuel">⛽ FUEL</button>
+  </nav>
+
+  <!-- PHASE 1 : SETUP -->
+  <section class="phase on" id="pSetup">
+    <div class="lamp" id="lamp"><i></i><span id="lampTxt">STANDBY</span></div>
+    <div class="sec-label">이륙 후 알람 시간 설정 (시간 : 분)</div>
+    <div id="timerList"></div>
+    <button class="btn btn-arm" id="btnStart">START MONITOR ▸</button>
+    <p class="hint">버튼을 누르면 가속도 센서 감지가 시작됩니다.<br>
+    알림 권한을 허용하면 화면이 잠겨도 알림이 표시됩니다.<br>
+    기내 비행기 모드에서도 정상 동작합니다 (오프라인).</p>
+  </section>
+
+  <!-- PHASE 2 : MONITORING -->
+  <section class="phase" id="pMon">
+    <div class="mon-box">
+      <div class="mon-title">● MONITORING — 이륙 대기 중</div>
+      <div class="g-val" id="gVal">0.00<span class="g-unit"> m/s²</span></div>
+      <div class="g-bar"><div class="g-fill" id="gFill"></div></div>
+      <div class="g-thresh">감지 기준: 가속 <span id="thVal">1.5</span> m/s² 이상, <span id="thSec">8</span>초 연속</div>
+      <div class="hold-note" id="holdNote"></div>
+    </div>
+    <div class="bright-tip" id="brightTip">
+      <span class="ico">🔅</span>
+      <span class="msg"><b>정확한 ALARM을 위하여 화면을 계속 켜 놓습니다.</b><br>배터리 소모를 줄이기 위해 화면 밝기를 낮추세요.</span>
+      <button class="dismiss-tip" onclick="this.parentElement.style.display='none'">✕</button>
+    </div>
+    <div class="notif-status" id="notifStatus"></div>
+    <div class="sec-label">설정된 알람</div>
+    <div id="monPreview"></div>
+    <button class="btn btn-ghost" id="btnManual">지금 이륙함 — 수동 시작</button>
+    <button class="btn btn-ghost" id="btnCancel">감지 취소</button>
+  </section>
+
+  <!-- PHASE 3 : AIRBORNE -->
+  <section class="phase" id="pAir">
+    <div class="air-head">
+      <div class="air-tag">✈ AIRBORNE — 이륙 감지됨</div>
+      <div class="air-elapsed" id="elapsed">T+00:00</div>
+      <div class="air-sub" id="tkoTime"></div>
+    </div>
+    <div class="sec-label">알람 카운트다운</div>
+    <div id="cdList"></div>
+    <button class="btn btn-ghost" id="btnReset">전체 초기화</button>
+  </section>
+
+  <!-- PAGE 2 : SHIFT CALC -->
+  <section id="pCalc">
+    <div class="sec-label">입력 (시간 : 분)</div>
+    <div class="calc-inputs">
+      <div class="ci" id="ciTotal"></div>
+      <div class="ci" id="ciLast"></div>
+      <div class="ci" id="ciStart"></div>
+    </div>
+    <div class="sec-label">교대 패턴</div>
+    <div id="calcOut"></div>
+  </section>
+
+  <!-- PAGE 3 : WIND CALC -->
+  <section id="pWind">
+    <div class="sec-label">RUNWAY</div>
+    <div class="w-inputs">
+      <div class="w-box">
+        <div class="w-cap">RUNWAY HEADING</div>
+        <div class="w-field">
+          <input type="number" class="w-input" id="wRwy" min="0" max="360" value="90" inputmode="numeric">
+          <span class="w-unit">°</span>
+        </div>
+      </div>
+    </div>
+    <div class="sec-label">WIND</div>
+    <div class="w-inputs">
+      <div class="w-row">
+        <div class="w-box">
+          <div class="w-cap">DIRECTION FROM</div>
+          <div class="w-field">
+            <input type="number" class="w-input sm" id="wDirFrom" min="0" max="360" value="270" inputmode="numeric">
+            <span class="w-sep">°–</span>
+            <input type="number" class="w-input sm" id="wDirTo" min="0" max="360" value="310" inputmode="numeric">
+            <span class="w-unit">°</span>
+          </div>
+          <div class="w-cap" style="margin-top:2px">단일 방향이면 같은 값 입력</div>
+        </div>
+        <div class="w-box">
+          <div class="w-cap">SPEED</div>
+          <div class="w-field">
+            <input type="number" class="w-input" id="wSpd" min="0" max="200" value="15" inputmode="numeric">
+            <span class="w-unit">kt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="wCompass"></div>
+    <div class="sec-label">계산 결과</div>
+    <div id="windOut"></div>
+  </section>
+
+  <!-- PAGE 4 : FUEL CALC -->
+  <section id="pFuel">
+    <div class="sec-label">연료 입력 (Klbs)</div>
+    <div class="w-inputs">
+      <div class="w-row">
+        <div class="w-box">
+          <div class="w-cap">TRIP FUEL</div>
+          <div class="w-field">
+            <input type="number" class="w-input" id="fTrip" min="0" max="999" value="45" step="0.1" inputmode="decimal">
+            <span class="w-unit">Klbs</span>
+          </div>
+        </div>
+        <div class="w-box">
+          <div class="w-cap">FINAL RESERVE</div>
+          <div class="w-field">
+            <input type="number" class="w-input" id="fRes" min="0" max="99" value="5.5" step="0.1" inputmode="decimal">
+            <span class="w-unit">Klbs</span>
+          </div>
+        </div>
+        <div class="w-box">
+          <div class="w-cap">ALTN FUEL</div>
+          <div class="w-field">
+            <input type="number" class="w-input" id="fAltn" min="0" max="99" value="8" step="0.1" inputmode="decimal">
+            <span class="w-unit">Klbs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sec-label">계산 결과</div>
+    <div id="fuelOut"></div>
+    <div class="sec-label">연료 비용 추정</div>
+    <div id="fuelCost"></div>
+    <div class="f-price-note" id="fPriceNote"></div>
+  </section>
+
+  <footer class="app-footer">
+    <p>© 2026 Utilities for Pilot. All rights reserved.</p>
+    <p>Contact & Inquiry: <a href="mailto:moonsikyim@gmail.com">moonsikyim@gmail.com</a></p>
+  </footer>
+
+</div>
+
+<!-- ALARM OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="ov-title">⏰ ALARM</div>
+  <div class="ov-time" id="ovTime">2:30</div>
+  <div class="ov-lbl" id="ovLbl">이륙 후 경과</div>
+  <button class="btn" id="btnDismiss">알람 끄기</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ───────── 상태 ───────── */
+const N=4;
+const timers=[];            // {enabled,h,m}
+let phase='setup';
+let takeoffAt=null;         // ms timestamp
+let motionHandler=null, tickInt=null, holdStart=null, baseline=null, smooth=0;
+let audioCtx=null, alarmTimer=null, vibInt=null, wakeLock=null;
+const TH=1.5, HOLD=8;       // 임계 m/s² · 지속 초
+
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const fmt=(h,m)=>`${h}:${pad(m)}`;
+
+/* ───────── 휠 생성 ───────── */
+function buildWheel(max,init,onChange,H=36){
+  const frame=document.createElement('div'); frame.className='wheel-frame';
+  const w=document.createElement('div'); w.className='wheel';
+  w.appendChild(Object.assign(document.createElement('div'),{className:'pad'}));
+  for(let i=0;i<=max;i++){
+    const it=document.createElement('div'); it.className='item'; it.textContent=pad(i); w.appendChild(it);
+  }
+  w.appendChild(Object.assign(document.createElement('div'),{className:'pad'}));
+  frame.appendChild(w);
+  const items=[...w.querySelectorAll('.item')];
+  function mark(v){items.forEach((el,i)=>el.classList.toggle('sel',i===v));}
+  let st=null;
+  w.addEventListener('scroll',()=>{
+    const v=Math.round(w.scrollTop/H);
+    mark(Math.min(max,Math.max(0,v)));
+    clearTimeout(st);
+    st=setTimeout(()=>{
+      const fv=Math.min(max,Math.max(0,Math.round(w.scrollTop/H)));
+      w.scrollTo({top:fv*H,behavior:'smooth'});
+      onChange(fv);
+    },120);
+  },{passive:true});
+  requestAnimationFrame(()=>{w.scrollTop=init*H; mark(init); onChange(init);});
+  return frame;
+}
+
+/* ───────── 타이머 행 4개 ───────── */
+const defaults=[[2,30,true],[4,40,true],[0,0,false],[0,0,false]];
+const list=$('timerList');
+for(let i=0;i<N;i++){
+  const [dh,dm,en]=defaults[i];
+  timers.push({enabled:en,h:dh,m:dm});
+  const row=document.createElement('div'); row.className='timer'+(en?'':' off');
+  row.innerHTML=`<div class="t-num">T${i+1}</div>`;
+  const wheels=document.createElement('div'); wheels.className='wheels';
+  const uh=document.createElement('div'); uh.className='wheel-unit';
+  uh.innerHTML='<div class="wheel-cap">HRS</div>';
+  uh.appendChild(buildWheel(12,dh,v=>timers[i].h=v));
+  const colon=document.createElement('div'); colon.className='colon'; colon.textContent=':';
+  const um=document.createElement('div'); um.className='wheel-unit';
+  um.innerHTML='<div class="wheel-cap">MIN</div>';
+  um.appendChild(buildWheel(59,dm,v=>timers[i].m=v));
+  wheels.append(uh,colon,um);
+  const tg=document.createElement('button'); tg.className='tgl'+(en?' on':'');
+  tg.onclick=()=>{timers[i].enabled=!timers[i].enabled;
+    tg.classList.toggle('on',timers[i].enabled);
+    row.classList.toggle('off',!timers[i].enabled);};
+  row.append(wheels,tg);
+  list.appendChild(row);
+}
+
+/* ───────── 페이즈 전환 ───────── */
+function setPhase(p){
+  phase=p;
+  $('pSetup').classList.toggle('on',p==='setup');
+  $('pMon').classList.toggle('on',p==='mon');
+  $('pAir').classList.toggle('on',p==='air');
+  const lamp=$('lamp');
+  lamp.className='lamp'+(p==='mon'?' armed':p==='air'?' airborne':'');
+  $('lampTxt').textContent=p==='mon'?'ARMED':p==='air'?'AIRBORNE':'STANDBY';
+  const target=p==='mon'?$('pMon'):p==='air'?$('pAir'):$('pSetup');
+  target.insertBefore(lamp,target.firstChild);
+}
+function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',2600);}
+
+/* ───────── 모니터 시작 ───────── */
+let notifGranted=false;
+$('btnStart').onclick=async()=>{
+  if(!timers.some(t=>t.enabled&&(t.h||t.m))){toast('활성화된 알람이 없습니다 (토글을 켜세요)');return;}
+  // iOS 센서 권한
+  try{
+    if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
+      const r=await DeviceMotionEvent.requestPermission();
+      if(r!=='granted'){toast('센서 권한이 거부되었습니다 — 수동 시작만 가능');}
+    }
+  }catch(e){}
+  // 오디오 컨텍스트 (사용자 제스처 안에서 준비)
+  audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  // 화면 꺼짐 방지
+  try{wakeLock=await navigator.wakeLock?.request('screen');}catch(e){}
+  // Notification 권한 요청 (백그라운드 안전망)
+  try{
+    if('Notification' in window){
+      const perm=await Notification.requestPermission();
+      notifGranted=(perm==='granted');
+      $('notifStatus').textContent=notifGranted
+        ?'✓ 알림 허용됨 — 화면 잠금 시에도 알림이 표시됩니다'
+        :'⚠ 알림 거부됨 — 화면을 켜둔 상태에서만 알람이 울립니다';
+    }
+  }catch(e){}
+  // 밝기 팁 표시
+  $('brightTip').style.display='flex';
+  startMotion();
+  renderMonPreview();
+  setPhase('mon');
+};
+
+function renderMonPreview(){
+  $('monPreview').innerHTML=timers.map((t,i)=>t.enabled&&(t.h||t.m)
+    ?`<div class="cd"><span class="lbl">T${i+1} — 이륙 후</span><span class="rem" style="font-size:20px">${fmt(t.h,t.m)}</span></div>`:'').join('');
+}
+
+/* ───────── 센서 감지 ───────── */
+function startMotion(){
+  baseline=null; smooth=0; holdStart=null;
+  motionHandler=e=>{
+    const a=e.accelerationIncludingGravity; if(!a||a.x==null)return;
+    if(!baseline){baseline={x:a.x,y:a.y,z:a.z};return;}
+    // 기준 벡터 서서히 갱신(중력 방향 추종) — 지속 가속만 편차로 남음
+    const K=0.002;
+    baseline.x+=(a.x-baseline.x)*K; baseline.y+=(a.y-baseline.y)*K; baseline.z+=(a.z-baseline.z)*K;
+    const dev=Math.hypot(a.x-baseline.x,a.y-baseline.y,a.z-baseline.z);
+    smooth+=(dev-smooth)*0.08;                     // 저역통과
+    $('gVal').innerHTML=smooth.toFixed(2)+'<span class="g-unit"> m/s²</span>';
+    $('gFill').style.width=Math.min(100,smooth/(TH*2)*100)+'%';
+    const now=Date.now();
+    if(smooth>=TH){
+      if(!holdStart)holdStart=now;
+      const s=((now-holdStart)/1000);
+      $('holdNote').textContent=`가속 감지 중… ${s.toFixed(1)} / ${HOLD}s`;
+      if(s>=HOLD)detectTakeoff();
+    }else{holdStart=null;$('holdNote').textContent='';}
+  };
+  window.addEventListener('devicemotion',motionHandler);
+}
+function stopMotion(){
+  if(motionHandler){window.removeEventListener('devicemotion',motionHandler);motionHandler=null;}
+}
+
+$('btnManual').onclick=()=>detectTakeoff();
+$('btnCancel').onclick=()=>{stopMotion();setPhase('setup');};
+
+/* ───────── 이륙 → 카운트다운 ───────── */
+function detectTakeoff(){
+  if(phase==='air')return;
+  stopMotion();
+  takeoffAt=Date.now();
+  timers.forEach(t=>{t.due=t.enabled&&(t.h||t.m)?takeoffAt+(t.h*3600+t.m*60)*1000:null;t.fired=false;});
+  const d=new Date(takeoffAt);
+  $('tkoTime').textContent=`이륙 시각 ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  buildCdList();
+  setPhase('air');
+  beep(2);  // 감지 확인음
+  sendNotif('✈ 이륙 감지됨',`알람 카운트다운이 시작되었습니다 (${pad(d.getHours())}:${pad(d.getMinutes())})`);
+  // 백그라운드 안전망: setTimeout으로 예약
+  scheduleNotifTimers();
+  tickInt=setInterval(tick,250);
+  tick();
+}
+
+function scheduleNotifTimers(){
+  timers.forEach((t,i)=>{
+    if(!t.due)return;
+    const delay=t.due-Date.now();
+    if(delay>0){
+      t.notifTimeout=setTimeout(()=>{
+        sendNotif(`⏰ T${i+1} 알람`,`이륙 후 ${t.h?t.h+'시간 ':''}${t.m?t.m+'분':''} 경과`,true);
+      },delay);
+    }
+  });
+}
+function buildCdList(){
+  $('cdList').innerHTML=timers.map((t,i)=>{
+    if(!t.due)return'';
+    const d=new Date(t.due);
+    const hh=d.getHours(),mm=d.getMinutes();
+    return `<div class="cd-wrap">
+      <div class="cd" id="cd${i}">
+        <div>
+          <div class="cd-inner"><span class="lbl">T${i+1} — ${fmt(t.h,t.m)} 후</span></div>
+          <div class="cd-clock">알람 시각 ${pad(hh)}:${pad(mm)}</div>
+        </div>
+        <span class="rem" id="rem${i}">--:--:--</span>
+      </div>
+      <button class="btn-sys" id="sys${i}" onclick="setSystemAlarm(${i},${hh},${mm})">
+        <span class="sys-ico">⏰</span>
+        <span class="sys-lbl">시스템 알람 설정</span>
+        <span class="sys-time">${pad(hh)}:${pad(mm)}</span>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+/* ───────── 시스템 알람 설정 ───────── */
+function setSystemAlarm(idx,hh,mm){
+  const btn=$('sys'+idx);
+  const isAndroid=/android/i.test(navigator.userAgent);
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  if(isAndroid){
+    // Android Intent — 시계 앱에 알람 추가 요청
+    const msg=encodeURIComponent(`T/O Timer T${idx+1}`);
+    const intent=`intent:#Intent;action=android.intent.action.SET_ALARM;`
+      +`i.android.intent.extra.alarm.HOUR=${hh};`
+      +`i.android.intent.extra.alarm.MINUTES=${mm};`
+      +`S.android.intent.extra.alarm.MESSAGE=${msg};`
+      +`B.android.intent.extra.alarm.SKIP_UI=false;end`;
+    window.location.href=intent;
+    setTimeout(()=>{
+      btn.classList.add('set');
+      btn.querySelector('.sys-lbl').textContent='설정 요청됨 ✓';
+    },500);
+  } else if(isIOS){
+    // iOS — 단축어 앱 연동 (clock-alarm URL scheme)
+    // iOS 17+ 에서는 shortcuts:// 로 Shortcut Automation 가능
+    // 가장 범용적인 방법: 시계 앱 열기 + 안내
+    const ok=confirm(
+      `iOS에서는 시계 앱에서 직접 설정해야 합니다.\n\n`
+      +`알람 시각: ${pad(hh)}:${pad(mm)}\n`
+      +`라벨: T/O Timer T${idx+1}\n\n`
+      +`시계 앱을 열까요?`
+    );
+    if(ok){
+      // clock-timer:// 또는 clock-alarm:// 은 비공식이지만 일부 iOS에서 동작
+      window.location.href='clock-alarm://';
+      // fallback: 1초 뒤 실패 시 일반 시계 앱
+      setTimeout(()=>{
+        window.location.href='clock://';
+      },1200);
+      btn.classList.add('set');
+      btn.querySelector('.sys-lbl').textContent='시계 앱에서 확인 ✓';
+    }
+  } else {
+    // 데스크톱 등 — 시각 복사
+    navigator.clipboard?.writeText(`${pad(hh)}:${pad(mm)}`).then(()=>{
+      toast(`${pad(hh)}:${pad(mm)} 복사됨 — 시계 앱에서 알람을 설정하세요`);
+      btn.classList.add('set');
+      btn.querySelector('.sys-lbl').textContent='시각 복사됨 ✓';
+    });
+  }
+}
+function tick(){
+  const now=Date.now();
+  const el=Math.floor((now-takeoffAt)/1000);
+  $('elapsed').textContent=`T+${pad(Math.floor(el/3600))}:${pad(Math.floor(el/60)%60)}:${pad(el%60)}`;
+  timers.forEach((t,i)=>{
+    if(!t.due)return;
+    const rem=Math.ceil((t.due-now)/1000);
+    const el2=$('rem'+i); if(!el2)return;
+    if(rem<=0){
+      el2.textContent='00:00:00';
+      $('cd'+i).classList.add('done');
+      if(!t.fired){t.fired=true;fireAlarm(i);}
+    }else{
+      el2.textContent=`${pad(Math.floor(rem/3600))}:${pad(Math.floor(rem/60)%60)}:${pad(rem%60)}`;
+    }
+  });
+}
+
+/* ───────── 알람 ───────── */
+function sendNotif(title,body,repeat){
+  if(!notifGranted||!('Notification' in window))return;
+  try{
+    const n=new Notification(title,{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="80">✈️</text></svg>',requireInteraction:true,tag:'to-alarm-'+Date.now()});
+    if(repeat){
+      // 반복 알림: 20초 간격으로 3회 더 (화면 잠겨 있을 때 잡기 위함)
+      let cnt=0;
+      const ri=setInterval(()=>{
+        cnt++;if(cnt>=3){clearInterval(ri);return;}
+        try{new Notification('⏰ '+title,{body:'알람을 확인하세요! '+body,requireInteraction:true,tag:'to-repeat-'+Date.now()});}catch(e){}
+      },20000);
+    }
+  }catch(e){}
+}
+function beep(times){
+  if(!audioCtx)return;
+  for(let i=0;i<times;i++){
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='sine';o.frequency.value=1200;
+    o.connect(g);g.connect(audioCtx.destination);
+    const t0=audioCtx.currentTime+i*0.25;
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(0.5,t0+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
+    o.start(t0);o.stop(t0+0.2);
+  }
+}
+function fireAlarm(i){
+  const t=timers[i];
+  $('ovTime').textContent=fmt(t.h,t.m);
+  $('ovLbl').textContent=`T${i+1} · 이륙 후 ${t.h?t.h+'시간 ':''}${t.m?t.m+'분':''} 경과`;
+  $('overlay').classList.add('on');
+  $('cd'+i)?.classList.add('ringing');
+  clearInterval(alarmTimer);
+  alarmTimer=setInterval(()=>beep(3),1200); beep(3);
+  if(navigator.vibrate){clearInterval(vibInt);vibInt=setInterval(()=>navigator.vibrate([400,150,400]),1200);}
+  // Web Notification (화면 잠금 시 안전망)
+  sendNotif(`⏰ T${i+1} 알람`,`이륙 후 ${t.h?t.h+'시간 ':''}${t.m?t.m+'분':''} 경과 — 알람을 확인하세요`,true);
+}
+$('btnDismiss').onclick=()=>{
+  $('overlay').classList.remove('on');
+  clearInterval(alarmTimer);clearInterval(vibInt);
+  if(navigator.vibrate)navigator.vibrate(0);
+  document.querySelectorAll('.cd.ringing').forEach(el=>el.classList.remove('ringing'));
+};
+
+/* ───────── 초기화 ───────── */
+$('btnReset').onclick=()=>{
+  clearInterval(tickInt);clearInterval(alarmTimer);clearInterval(vibInt);
+  timers.forEach(t=>{if(t.notifTimeout)clearTimeout(t.notifTimeout);});
+  $('overlay').classList.remove('on');
+  setPhase('setup');
+};
+
+/* ───────── 탭 전환 ───────── */
+let calcBuilt=false;
+const allTabs=['tabAlarm','tabCalc','tabWind','tabFuel'];
+function switchTab(active){
+  document.body.classList.remove('calc','wind','fuel');
+  allTabs.forEach(t=>$(t).classList.remove('on'));
+  $(active).classList.add('on');
+  if(active==='tabCalc'){document.body.classList.add('calc');if(!calcBuilt){buildCalc();calcBuilt=true;}}
+  if(active==='tabWind'){document.body.classList.add('wind');initWind();}
+  if(active==='tabFuel'){document.body.classList.add('fuel');initFuel();}
+}
+$('tabAlarm').onclick=()=>switchTab('tabAlarm');
+$('tabCalc').onclick=()=>switchTab('tabCalc');
+$('tabWind').onclick=()=>switchTab('tabWind');
+$('tabFuel').onclick=()=>switchTab('tabFuel');
+
+/* ───────── 교대 계산기 ───────── */
+const cs={th:10,tm:0, rh:1,rm:0, sh:0,sm:0};   // 총비행 / 마지막근무 / 시작(기본 00:00)
+function wheelGroup(targetId,capText,hMax,hInit,mInit,setH,setM){
+  const box=$(targetId);
+  const cap=document.createElement('div'); cap.className='ci-cap'; cap.textContent=capText;
+  const ws=document.createElement('div'); ws.className='wheels';
+  const uh=document.createElement('div'); uh.className='wheel-unit';
+  uh.appendChild(buildWheel(hMax,hInit,v=>{setH(v);calcAll();},32));
+  const col=document.createElement('div'); col.className='colon'; col.textContent=':';
+  const um=document.createElement('div'); um.className='wheel-unit';
+  um.appendChild(buildWheel(59,mInit,v=>{setM(v);calcAll();},32));
+  ws.append(uh,col,um);
+  box.append(cap,ws);
+}
+function buildCalc(){
+  wheelGroup('ciTotal','총 비행시간',20,cs.th,cs.tm,v=>cs.th=v,v=>cs.tm=v);
+  wheelGroup('ciLast','마지막 근무',5,cs.rh,cs.rm,v=>cs.rh=v,v=>cs.rm=v);
+  wheelGroup('ciStart','시작시간',23,cs.sh,cs.sm,v=>cs.sh=v,v=>cs.sm=v);
+  calcAll();
+}
+const clk=m=>{m=Math.round(m);const d=Math.floor(m/1440);m=((m%1440)+1440)%1440;
+  return pad(Math.floor(m/60))+':'+pad(m%60)+(d>0?'⁺¹':'');};
+const dur=m=>{m=Math.round(m);return Math.floor(m/60)+':'+pad(m%60);};
+
+function segCard(title,bounds,who,S,T,totNote){
+  let bar='',rows='';
+  for(let i=0;i<who.length;i++){
+    const len=bounds[i+1]-bounds[i], w=len/T*100;
+    bar+=`<div class="b${who[i].toLowerCase()}" style="width:${w}%">${w>9?who[i].toUpperCase():''}</div>`;
+    rows+=`<div class="seg-row"><span>${clk(S+bounds[i])} – ${clk(S+bounds[i+1])}</span><span class="who">${who[i].toUpperCase()} · ${dur(len)}</span></div>`;
+  }
+  return `<div class="pat"><h3>${title}</h3><div class="bar">${bar}</div>${rows}<div class="tot">${totNote}</div></div>`;
+}
+function laneBar(blocks,T,cls){ // blocks=[[s,e],...] 근무구간, 나머지 휴식
+  let html='',cur=0;
+  blocks.forEach(([s,e])=>{
+    if(s>cur)html+=`<div class="brest" style="width:${(s-cur)/T*100}%"></div>`;
+    html+=`<div class="${cls}" style="width:${(e-s)/T*100}%"></div>`;
+    cur=e;
+  });
+  if(cur<T)html+=`<div class="brest" style="width:${(T-cur)/T*100}%"></div>`;
+  return `<div class="bar">${html}</div>`;
+}
+function calcAll(){
+  const out=$('calcOut'); if(!out)return;
+  const T=cs.th*60+cs.tm, R=cs.rh*60+cs.rm, S=cs.sh*60+cs.sm;
+  if(T<=0){out.innerHTML='<div class="err">총 비행시간을 입력하세요.</div>';return;}
+  let html='';
+  /* PATTERN 1 : P1 → P2 → P1(착륙) */
+  if(R<=0){
+    html+='<div class="err">패턴 1·2 — 마지막 근무시간을 입력하세요 (이륙·착륙 동일 조종사 유지용).</div>';
+  }else if(R>=T/2){
+    html+='<div class="err">패턴 1·2 — 마지막 근무시간이 비행시간의 절반 이상이라 계산할 수 없습니다.</div>';
+  }else{
+    const b1=[0,T/2-R,T-R,T].map(Math.round);
+    html+=segCard('PATTERN 1 · 2 PILOTS — 교대 2회',b1,['p1','p2','p1'],S,T,
+      `근무 합계 — P1 ${dur(T/2)} · P2 ${dur(T/2)} (P1 이륙·착륙)`);
+    /* PATTERN 2 : P1 → P2 → P1 → P2 → P1(착륙) */
+    const a=(T/2-R)/2, b=T/4;
+    const b2=[0,a,a+b,2*a+b,T-R,T].map(Math.round);
+    html+=segCard('PATTERN 2 · 2 PILOTS — 교대 4회',b2,['p1','p2','p1','p2','p1'],S,T,
+      `근무 합계 — P1 ${dur(T/2)} · P2 ${dur(T/2)} (P1 이륙·착륙)`);
+  }
+  /* PATTERN 3 : 3 PILOTS (동시 2명 근무) */
+  const t1=Math.round(T/3), t2=Math.round(2*T/3);
+  html+=`<div class="pat"><h3>PATTERN 3 · 3 PILOTS — 동시 2명 근무</h3>
+    <div class="lane"><span class="lname">P1</span>${laneBar([[0,t2]],T,'bp1')}</div>
+    <div class="lane"><span class="lname">P2</span>${laneBar([[t1,T]],T,'bp2')}</div>
+    <div class="lane"><span class="lname">P3</span>${laneBar([[0,t1],[t2,T]],T,'bp3')}</div>
+    <div class="seg-row"><span>${clk(S)} – ${clk(S+t1)}</span><span class="who">P1 + P3 (이륙)</span></div>
+    <div class="seg-row"><span>${clk(S+t1)} – ${clk(S+t2)}</span><span class="who">P1 + P2</span></div>
+    <div class="seg-row"><span>${clk(S+t2)} – ${clk(S+T)}</span><span class="who">P2 + P3 (착륙)</span></div>
+    <div class="tot">각 조종사 근무 ${dur(2*T/3)} · 휴식 ${dur(T/3)} — P1 휴식 ${clk(S+t2)}–${clk(S+T)} · P2 휴식 ${clk(S)}–${clk(S+t1)} · P3 휴식 ${clk(S+t1)}–${clk(S+t2)}</div>
+  </div>`;
+  out.innerHTML=html;
+}
+
+/* 화면 재진입 시 Wake Lock 재요청 */
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState==='visible'&&phase!=='setup'){
+    try{wakeLock=await navigator.wakeLock?.request('screen');}catch(e){}
+  }
+});
+
+/* ───────── 바람 계산기 ───────── */
+let windInited=false;
+function initWind(){
+  if(windInited)return;windInited=true;
+  ['wRwy','wDirFrom','wDirTo','wSpd'].forEach(id=>{
+    $(id).addEventListener('input',calcWind);
+  });
+  calcWind();
+}
+const rad=d=>d*Math.PI/180;
+const deg=r=>(r*180/Math.PI+360)%360;
+function normAngle(a){return((a%360)+360)%360;}
+
+function calcWind(){
+  const rwyHdg=normAngle(parseInt($('wRwy').value)||0);
+  const dirFrom=normAngle(parseInt($('wDirFrom').value)||0);
+  const dirTo=normAngle(parseInt($('wDirTo').value)||0);
+  const spd=parseFloat($('wSpd').value)||0;
+
+  if(spd<=0){
+    $('windOut').innerHTML='<div class="err">Wind Speed를 입력하세요.</div>';
+    $('wCompass').innerHTML='';
+    return;
+  }
+
+  // 바람 방향 범위 내 샘플링 (1° 단위)
+  const dirs=[];
+  if(dirFrom===dirTo){
+    dirs.push(dirFrom);
+  }else{
+    let a=dirFrom;
+    for(let n=0;n<360;n++){
+      dirs.push(a);
+      if(a===dirTo)break;
+      a=(a+1)%360;
+    }
+  }
+
+  function analyze(){
+    let bestHW=-9999, worstHW=9999, bestDir=0, worstDir=0;
+    dirs.forEach(wd=>{
+      const diff=rad(wd-rwyHdg);
+      const hw=spd*Math.cos(diff);
+      if(hw>bestHW){bestHW=hw;bestDir=wd;}
+      if(hw<worstHW){worstHW=hw;worstDir=wd;}
+    });
+    const bestDiff=rad(bestDir-rwyHdg);
+    const worstDiff=rad(worstDir-rwyHdg);
+    return{
+      bestDir, bestHW, bestXW:Math.abs(spd*Math.sin(bestDiff)),
+      worstDir, worstHW, worstXW:Math.abs(spd*Math.sin(worstDiff))
+    };
+  }
+
+  const a1=analyze();
+  const hdgStr=String(rwyHdg).padStart(3,'0');
+
+  function card(title,cls,wdir,hw,xw){
+    const hwAbs=Math.abs(hw).toFixed(1);
+    const xwAbs=xw.toFixed(1);
+    const isHW=hw>=0;
+    return `<div class="wr"><h3 class="${cls}">${title}</h3>
+      <div class="wr-rwy">▸ HDG ${hdgStr}° — WIND ${String(Math.round(wdir)).padStart(3,'0')}°/${spd}kt</div>
+      <div class="wr-grid">
+        <div class="wr-cell">
+          <div class="wr-val ${isHW?'green':'red'}">${hwAbs}</div>
+          <div class="wr-lbl">${isHW?'HEADWIND':'TAILWIND'} (kt)</div>
+        </div>
+        <div class="wr-cell">
+          <div class="wr-val blue">${xwAbs}</div>
+          <div class="wr-lbl">CROSSWIND (kt)</div>
+        </div>
+      </div>
+      <div class="wr-note">${isHW
+        ?`정풍 ${hwAbs}kt · 측풍 ${xwAbs}kt`
+        :`배풍 ${hwAbs}kt · 측풍 ${xwAbs}kt`}</div>
+    </div>`;
+  }
+
+  let html='';
+  html+=card('⚠ 가장 불리한 바람 성분','unfav',a1.worstDir,a1.worstHW,a1.worstXW);
+  html+=card('✅ 가장 유리한 바람 성분','fav',a1.bestDir,a1.bestHW,a1.bestXW);
+
+  $('windOut').innerHTML=html;
+
+  drawCompass(rwyHdg,dirFrom,dirTo,dirs);
+}
+
+function drawCompass(rwyHdg,dirFrom,dirTo,dirs){
+  const cx=90,cy=90,r=72,ri=58;
+  const px=(a,rr)=>cx+rr*Math.sin(rad(a));
+  const py=(a,rr)=>cy-rr*Math.cos(rad(a));
+  const rwyOpp=(rwyHdg+180)%360;
+  const hdgStr=String(rwyHdg).padStart(3,'0');
+
+  // 바람 범위 arc
+  let arcPath='';
+  if(dirs.length===1){
+    arcPath=`<line x1="${px(dirFrom,ri)}" y1="${py(dirFrom,ri)}" x2="${cx}" y2="${cy}" stroke="#5B9BD5" stroke-width="2" opacity=".6"/>`;
+  }else{
+    const sweep=dirs.length<=180?0:1;
+    arcPath=`<path d="M${px(dirFrom,r)} ${py(dirFrom,r)} A${r} ${r} 0 ${sweep} 1 ${px(dirTo,r)} ${py(dirTo,r)} L${cx} ${cy}Z" fill="rgba(91,155,213,.15)" stroke="#5B9BD5" stroke-width="1.5"/>`;
+  }
+
+  // 활주로 모양
+  const ar=rad(rwyHdg);
+  const rLen=r-8, rW=8; // 활주로 길이·폭의 절반
+  // 네 꼭짓점 (중심 cx,cy 기준 회전)
+  const cs2=Math.cos(ar), sn=Math.sin(ar);
+  const corners=[[-rW,-rLen],[rW,-rLen],[rW,rLen],[-rW,rLen]].map(([x,y])=>
+    [cx+x*cs2-y*sn, cy+x*sn+y*cs2]);
+  const rwyShape=`<polygon points="${corners.map(c=>c.join(',')).join(' ')}" fill="#1a2640" stroke="var(--amber)" stroke-width="1.5" opacity=".9"/>`;
+  // 중심선 대시
+  let dashes='';
+  for(let i=-3;i<=3;i++){
+    const dl=i*14, d2=dl+6;
+    const x1=cx-dl*sn, y1=cy+dl*cs2;
+    const x2=cx-d2*sn, y2=cy+d2*cs2;
+    dashes+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--amber)" stroke-width="1.2" opacity=".5"/>`;
+  }
+  // 헤딩 방향 끝에 삼각형 화살표 (방향 표시)
+  const tipX=cx-rLen*sn+rLen*0*cs2, tipY=cy+rLen*cs2;
+  const triSize=6;
+  const t1x=px(rwyHdg,rLen+triSize), t1y=py(rwyHdg,rLen+triSize);
+  const t2x=px(rwyHdg,rLen-2)+triSize*cs2, t2y=py(rwyHdg,rLen-2)+triSize*sn;
+  const t3x=px(rwyHdg,rLen-2)-triSize*cs2, t3y=py(rwyHdg,rLen-2)-triSize*sn;
+  const dirTri=`<polygon points="${t1x},${t1y} ${t2x},${t2y} ${t3x},${t3y}" fill="var(--amber)" opacity=".7"/>`;
+  const rwyArrow=rwyShape+dashes+dirTri;
+
+  // 방위 눈금
+  let ticks='';
+  for(let d=0;d<360;d+=30){
+    const l=d%90===0?10:5;
+    ticks+=`<line x1="${px(d,r)}" y1="${py(d,r)}" x2="${px(d,r-l)}" y2="${py(d,r-l)}" stroke="var(--line)" stroke-width="1.5"/>`;
+  }
+  const labels=[['N',0],['E',90],['S',180],['W',270]];
+  let lblHtml='';
+  labels.forEach(([t,a])=>{
+    lblHtml+=`<text x="${px(a,r+11)}" y="${py(a,r+11)}" text-anchor="middle" dominant-baseline="central" fill="var(--dim)" font-size="10" font-family="var(--mono)">${t}</text>`;
+  });
+
+  $('wCompass').innerHTML=`<div class="compass-wrap"><div class="compass">
+    <svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--line)" stroke-width="1"/>
+      ${ticks}${lblHtml}${arcPath}${rwyArrow}
+      <text x="${px(rwyHdg,r-18)}" y="${py(rwyHdg,r-18)}" text-anchor="middle" dominant-baseline="central" fill="var(--amber)" font-size="11" font-weight="700" font-family="var(--mono)">${hdgStr}</text>
+    </svg>
+  </div></div>`;
+}
+
+/* ───────── 연료 계산기 ───────── */
+let fuelInited=false;
+// 참조 연료가: Jet-A1 US Gulf Coast ~$3.50/gal (Jul 2026), USD/KRW ~1,480
+const FUEL_USD_GAL=3.50;
+const USD_KRW=1480;
+const LBS_PER_GAL=6.7; // Jet-A1 밀도
+
+function initFuel(){
+  if(fuelInited)return;fuelInited=true;
+  ['fTrip','fRes','fAltn'].forEach(id=>$(id).addEventListener('input',calcFuel));
+  calcFuel();
+  fetchFuelPrice();
+}
+
+function calcFuel(){
+  const trip=parseFloat($('fTrip').value)||0;
+  const res=parseFloat($('fRes').value)||0;
+  const altn=parseFloat($('fAltn').value)||0;
+
+  const minFuel=altn+1.3*res;
+  const emerFuel=altn+res;
+  const min10=minFuel+res/3;
+  const min20=minFuel+2*res/3;
+  const min30=minFuel+res;
+
+  const fmt=v=>v.toFixed(1);
+
+  $('fuelOut').innerHTML=`
+    <div class="f-grid">
+      <div class="f-card emer">
+        <div class="f-label">EMER. FUEL</div>
+        <div class="f-val red">${fmt(emerFuel)}</div>
+        <div class="f-sub">ALTN + Final Res.</div>
+      </div>
+      <div class="f-card">
+        <div class="f-label">MIN. FUEL</div>
+        <div class="f-val amber">${fmt(minFuel)}</div>
+        <div class="f-sub">ALTN + 1.3 × Final Res.</div>
+      </div>
+      <div class="f-card">
+        <div class="f-label">MIN +10 min</div>
+        <div class="f-val blue">${fmt(min10)}</div>
+        <div class="f-sub">Min + 1/3 Final Res.</div>
+      </div>
+      <div class="f-card">
+        <div class="f-label">MIN +20 min</div>
+        <div class="f-val blue">${fmt(min20)}</div>
+        <div class="f-sub">Min + 2/3 Final Res.</div>
+      </div>
+      <div class="f-card wide">
+        <div class="f-label">MIN +30 min</div>
+        <div class="f-val green">${fmt(min30)}</div>
+        <div class="f-sub">Min + Final Res.</div>
+      </div>
+    </div>`;
+
+  renderFuelCost(trip,minFuel,emerFuel);
+}
+
+function renderFuelCost(trip,minFuel,emerFuel){
+  const price=currentFuelPrice||FUEL_USD_GAL;
+  const rate=currentKRW||USD_KRW;
+  const gal=trip*1000/LBS_PER_GAL;
+  const usd=gal*price;
+  const krw=usd*rate;
+
+  $('fuelCost').innerHTML=`<div class="f-cost-card">
+    <h4>⛽ TRIP FUEL COST (${trip.toFixed(1)} Klbs · Jet-A1 $${price.toFixed(2)}/gal)</h4>
+    <div class="f-cost-row"><span>USD</span><span class="fv usd">$${usd.toLocaleString('en',{maximumFractionDigits:0})}</span></div>
+    <div class="f-cost-row"><span>KRW (₩${rate}/USD)</span><span class="fv krw">₩${Math.round(krw).toLocaleString('ko')}</span></div>
+  </div>`;
+}
+
+/* 실시간 연료가 조회 시도 */
+let currentFuelPrice=null, currentKRW=null;
+async function fetchFuelPrice(){
+  try{
+    // IATA Platts 등 공개 API가 없으므로 CORS-friendly 환경에서만 시도
+    const r=await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    if(r.ok){
+      const d=await r.json();
+      if(d.rates&&d.rates.KRW){currentKRW=Math.round(d.rates.KRW);calcFuel();}
+    }
+  }catch(e){}
+  $('fPriceNote').innerHTML=`참조: Jet-A1 US Gulf $${(currentFuelPrice||FUEL_USD_GAL).toFixed(2)}/gal (Jul 2026 기준)`
+    +`${currentKRW?' · 환율 실시간 조회 ₩'+currentKRW+'/USD':' · ₩'+USD_KRW+'/USD (참조값)'}`;
+}
+</script>
+</body>
+</html>
