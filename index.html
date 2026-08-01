@@ -134,8 +134,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:6px
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 18px;font-size:13px;color:var(--text);display:none;z-index:60}
 
 /* ── tabs ───────────────────────── */
-.tabs{display:flex;gap:8px;margin-top:12px}
-.tab{flex:1;font-family:var(--mono);font-size:12px;letter-spacing:.1em;padding:11px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--dim);cursor:pointer;transition:.15s}
+.tabs{display:flex;gap:5px;margin-top:12px}
+.tab{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:10px 2px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--dim);cursor:pointer;transition:.15s;white-space:nowrap}
 .tab.on{background:var(--panel);color:var(--amber);border-color:var(--amber-dim)}
 body.calc .phase{display:none!important}
 #pCalc{display:none;flex-direction:column;flex:1}
@@ -146,6 +146,40 @@ body.wind #pWind{display:flex}
 body.fuel .phase{display:none!important}
 #pFuel{display:none;flex-direction:column;flex:1}
 body.fuel #pFuel{display:flex}
+body.gate .phase{display:none!important}
+#pGate{display:none;flex-direction:column;flex:1}
+body.gate #pGate{display:flex}
+
+/* ── gate finder ────────────────── */
+.g-row{display:flex;gap:8px;margin-bottom:9px}
+.g-fld{flex:1;display:flex;flex-direction:column;gap:5px}
+.g-cap{font-family:var(--mono);font-size:10px;letter-spacing:.13em;color:var(--dim)}
+.g-in{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);
+  font-family:var(--mono);font-size:16px;padding:11px 12px;text-align:center;outline:none}
+.g-in:focus{border-color:var(--amber-dim)}
+.g-in::placeholder{color:#4a5872}
+select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:none}
+.g-seg{display:flex;gap:5px}
+.g-seg button{flex:1;font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:10px 4px;border-radius:9px;
+  border:1px solid var(--line);background:var(--panel2);color:var(--dim);cursor:pointer;transition:.15s}
+.g-seg button.on{background:var(--panel);color:var(--amber);border-color:var(--amber-dim)}
+.g-hint{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;
+  font-size:12px;line-height:1.7;color:var(--dim);margin-bottom:12px}
+.g-hint b{color:var(--text);font-weight:500}
+.g-lnk{display:flex;align-items:center;gap:12px;width:100%;background:var(--panel);
+  border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:9px;
+  text-decoration:none;color:var(--text);transition:.15s}
+.g-lnk:active{border-color:var(--amber-dim);background:var(--panel2)}
+.g-lnk.pri{border-color:var(--amber-dim)}
+.g-ico{font-size:22px;width:28px;text-align:center;flex-shrink:0}
+.g-txt{flex:1;min-width:0}
+.g-ttl{font-family:var(--mono);font-size:13.5px;letter-spacing:.03em;color:var(--text);margin-bottom:2px}
+.g-lnk.pri .g-ttl{color:var(--amber)}
+.g-sub{font-size:11px;line-height:1.5;color:var(--dim)}
+.g-arw{font-family:var(--mono);font-size:14px;color:var(--dim);flex-shrink:0}
+.g-copy{width:100%;background:var(--panel2);border:1px dashed var(--line);border-radius:10px;
+  padding:11px;font-family:var(--mono);font-size:14px;color:var(--amber);letter-spacing:.08em;
+  cursor:pointer;margin-bottom:12px}
 
 /* ── calc inputs (소형 휠) ───────── */
 .calc-inputs{display:flex;gap:8px;margin-top:4px}
@@ -262,6 +296,7 @@ body.fuel #pFuel{display:flex}
     <button class="tab" id="tabCalc">⇄ SHIFT</button>
     <button class="tab" id="tabWind">💨 WIND</button>
     <button class="tab" id="tabFuel">⛽ FUEL</button>
+    <button class="tab" id="tabGate">🛫 GATE</button>
   </nav>
 
   <!-- PHASE 1 : SETUP -->
@@ -392,6 +427,50 @@ body.fuel #pFuel{display:flex}
     <div class="sec-label">연료 비용 추정</div>
     <div id="fuelCost"></div>
     <div class="f-price-note" id="fPriceNote"></div>
+  </section>
+
+  <!-- GATE FINDER -->
+  <section id="pGate">
+    <div class="sec-label">편명 입력</div>
+
+    <div class="g-row">
+      <div class="g-fld" style="flex:1.25">
+        <label class="g-cap">FLIGHT NO.</label>
+        <input class="g-in" id="gFlt" placeholder="KE001" autocapitalize="characters"
+               autocomplete="off" spellcheck="false" maxlength="8">
+      </div>
+      <div class="g-fld">
+        <label class="g-cap">AIRPORT</label>
+        <select class="g-in" id="gApt">
+          <option value="ICN">인천 ICN</option>
+          <option value="GMP">김포 GMP</option>
+          <option value="PUS">김해 PUS</option>
+          <option value="CJU">제주 CJU</option>
+          <option value="TAE">대구 TAE</option>
+          <option value="CJJ">청주 CJJ</option>
+          <option value="INTL">해외 공항</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="g-row">
+      <div class="g-fld">
+        <label class="g-cap">DEP / ARR</label>
+        <div class="g-seg" id="gSeg">
+          <button class="on" data-io="D">▲ 출발 DEP</button>
+          <button data-io="A">▼ 도착 ARR</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-arm" id="gBtn" style="margin-top:6px">바로가기 생성 ▸</button>
+
+    <div id="gOut"></div>
+
+    <p class="g-note">
+      ※ 게이트는 출발 2~3시간 전 확정되며 이후에도 변경될 수 있습니다.
+      최종 확인은 공항 FIDS 또는 회사 시스템을 따르십시오.
+    </p>
   </section>
 
   <footer class="app-footer">
@@ -781,20 +860,96 @@ $('btnReset').onclick=()=>{
 
 /* ───────── 탭 전환 ───────── */
 let calcBuilt=false;
-const allTabs=['tabAlarm','tabCalc','tabWind','tabFuel'];
+const allTabs=['tabAlarm','tabCalc','tabWind','tabFuel','tabGate'];
 function switchTab(active){
-  document.body.classList.remove('calc','wind','fuel');
+  document.body.classList.remove('calc','wind','fuel','gate');
   allTabs.forEach(t=>$(t).classList.remove('on'));
   $(active).classList.add('on');
   if(active==='tabCalc'){document.body.classList.add('calc');if(!calcBuilt){buildCalc();calcBuilt=true;}}
   if(active==='tabWind'){document.body.classList.add('wind');initWind();}
   if(active==='tabFuel'){document.body.classList.add('fuel');initFuel();}
+  if(active==='tabGate'){document.body.classList.add('gate');initGate();}
   restoreWheels();   // 탭 전환 후 휠 위치 복원
 }
 $('tabAlarm').onclick=()=>switchTab('tabAlarm');
 $('tabCalc').onclick=()=>switchTab('tabCalc');
 $('tabWind').onclick=()=>switchTab('tabWind');
 $('tabFuel').onclick=()=>switchTab('tabFuel');
+$('tabGate').onclick=()=>switchTab('tabGate');
+
+/* ───────── 게이트 바로가기 ───────── */
+let gIO='D', gateInit=false;
+
+const GAPT={
+  ICN:{n:'인천국제공항',
+       D:'https://www.airport.kr/ap/ko/dep/depPasSchList.do',
+       A:'https://www.airport.kr/ap/ko/arr/arrPasSchList.do'},
+  GMP:{n:'김포국제공항', D:'https://www.airport.co.kr/gimpo/index.do', A:'https://www.airport.co.kr/gimpo/index.do'},
+  PUS:{n:'김해국제공항', D:'https://www.airport.co.kr/gimhae/index.do', A:'https://www.airport.co.kr/gimhae/index.do'},
+  CJU:{n:'제주국제공항', D:'https://www.airport.co.kr/jeju/index.do', A:'https://www.airport.co.kr/jeju/index.do'},
+  TAE:{n:'대구국제공항', D:'https://www.airport.co.kr/daegu/index.do', A:'https://www.airport.co.kr/daegu/index.do'},
+  CJJ:{n:'청주국제공항', D:'https://www.airport.co.kr/cheongju/index.do', A:'https://www.airport.co.kr/cheongju/index.do'}
+};
+
+function initGate(){
+  if(gateInit)return; gateInit=true;
+  $('gSeg').querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{gIO=b.dataset.io;
+      $('gSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+      if($('gFlt').value.trim())runGate();};
+  });
+  $('gApt').onchange=()=>{if($('gFlt').value.trim())runGate();};
+  $('gBtn').onclick=runGate;
+  $('gFlt').addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.target.blur();runGate();}
+  });
+}
+
+function gLink(url,ico,ttl,sub,pri){
+  return '<a class="g-lnk'+(pri?' pri':'')+'" href="'+url+'" target="_blank" rel="noopener">'
+    +'<span class="g-ico">'+ico+'</span>'
+    +'<span class="g-txt"><span class="g-ttl">'+ttl+'</span>'
+    +'<span class="g-sub">'+sub+'</span></span>'
+    +'<span class="g-arw">›</span></a>';
+}
+
+function runGate(){
+  const flt=$('gFlt').value.trim().toUpperCase().replace(/[\s-]+/g,'');
+  if(!flt){toast('편명을 입력하세요');$('gOut').innerHTML='';return;}
+  const apt=$('gApt').value, io=gIO;
+  const q=encodeURIComponent(flt);
+  const lo=flt.toLowerCase();
+  const io_ko=io==='D'?'출발':'도착';
+
+  let h='<div class="g-hint"><b>'+flt+'</b> · '+io_ko
+    +' — 아래에서 확인하세요. 게이트는 <b>공항 FIDS</b>가 가장 빠르고 정확합니다.</div>';
+
+  h+='<button class="g-copy" id="gCopy">📋 '+flt+' 복사</button>';
+
+  const a=GAPT[apt];
+  if(a) h+=gLink(a[io],'🛫',a.n+' '+io_ko+' 현황','공항 운영 원본 데이터 · 가장 빠름',true);
+  else  h+=gLink('https://www.google.com/search?q='+q+'+airport+official+site','🛫',
+                 '해당 공항 공식 FIDS 찾기','도착지 공항 홈페이지의 운항정보가 가장 정확',true);
+
+  h+=gLink('https://www.google.com/search?q='+q,'🔍','구글 검색',
+           '편명 카드로 터미널·게이트·지연 즉시 표시');
+  h+=gLink('https://flightaware.com/live/flight/'+q,'📡','FlightAware',
+           '실시간 추적 · 게이트 및 예상시각');
+  h+=gLink('https://www.flightradar24.com/data/flights/'+encodeURIComponent(lo),'🌐','Flightradar24',
+           '항공기 위치 · 운항 이력');
+
+  $('gOut').innerHTML=h;
+
+  $('gCopy').onclick=()=>{
+    const t=$('gCopy');
+    try{
+      navigator.clipboard.writeText(flt).then(()=>{
+        t.textContent='✓ 복사됨'; toast(flt+' 복사됨');
+        setTimeout(()=>t.textContent='📋 '+flt+' 복사',1400);
+      });
+    }catch(e){toast('복사를 지원하지 않는 환경입니다');}
+  };
+}
 
 /* ───────── 교대 계산기 ───────── */
 const cs={th:10,tm:0, rh:1,rm:0, sh:0,sm:0};   // 총비행 / 마지막근무 / 시작(기본 00:00)
