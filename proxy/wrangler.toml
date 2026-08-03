@@ -1,0 +1,13 @@
+name = "icn-gate-proxy"
+main = "worker.js"
+compatibility_date = "2026-08-03"
+
+# 배포 후 Worker URL 예: https://icn-gate-proxy.<your-subdomain>.workers.dev
+#
+# serviceKey 는 코드/repo 에 두지 말고 secret 으로 넣습니다:
+#   cd proxy
+#   npx wrangler secret put SERVICE_KEY
+#   (프롬프트가 뜨면 공공데이터포털 "인코딩 인증키" 붙여넣기)
+#
+# 로컬 테스트:  npx wrangler dev
+# 배포:         npx wrangler deploy

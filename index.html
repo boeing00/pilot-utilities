@@ -181,6 +181,37 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
   padding:11px;font-family:var(--mono);font-size:14px;color:var(--amber);letter-spacing:.08em;
   cursor:pointer;margin-bottom:12px}
 
+/* ── live gate result (인천공항 API) ── */
+.gl-card{background:linear-gradient(135deg,#141c2b,#0e141f);border:1px solid var(--amber-dim);
+  border-radius:14px;padding:16px 16px 14px;margin-bottom:12px}
+.gl-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
+.gl-flt{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--amber);letter-spacing:.04em}
+.gl-status{font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:3px 9px;border-radius:20px;
+  border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.gl-status.go{color:var(--green);border-color:#1a4a2a}
+.gl-status.warn{color:var(--amber);border-color:var(--amber-dim)}
+.gl-status.stop{color:var(--red);border-color:#6b2020}
+.gl-route{font-size:12.5px;color:var(--dim);margin-bottom:14px}
+.gl-route b{color:var(--text);font-weight:500}
+.gl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.gl-cell{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 10px;text-align:center}
+.gl-cell.hero{grid-column:1/-1;background:linear-gradient(180deg,#1a2536,#0e141f);border-color:var(--amber-dim)}
+.gl-cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--dim);margin-bottom:5px}
+.gl-val{font-family:var(--mono);font-weight:700;color:var(--text);line-height:1}
+.gl-cell.hero .gl-val{font-size:40px;color:var(--amber);text-shadow:0 0 14px rgba(255,179,0,.3)}
+.gl-val.md{font-size:17px}
+.gl-times{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;
+  padding:9px 4px 2px;border-top:1px dashed var(--line);color:var(--dim)}
+.gl-times b{color:var(--text);font-weight:500}
+.gl-times .chg{color:var(--amber)}
+.gl-datebadge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  color:#1a1200;background:var(--amber);border-radius:5px;padding:2px 7px;margin-left:7px}
+.gl-loading,.gl-empty{font-family:var(--mono);font-size:12px;color:var(--dim);text-align:center;
+  padding:16px;border:1px dashed var(--line);border-radius:12px;margin-bottom:12px}
+.gl-empty b{color:var(--text)}
+.gl-err{font-family:var(--mono);font-size:11.5px;color:var(--red);text-align:center;
+  padding:12px;border:1px solid #6b2020;border-radius:12px;margin-bottom:12px;line-height:1.6}
+
 /* ── calc inputs (소형 휠) ───────── */
 .calc-inputs{display:flex;gap:8px;margin-top:4px}
 .ci{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 6px;flex:1;display:flex;flex-direction:column;align-items:center;gap:7px}
@@ -880,6 +911,11 @@ $('tabGate').onclick=()=>switchTab('tabGate');
 /* ───────── 게이트 바로가기 ───────── */
 let gIO='D', gateInit=false;
 
+// 배포한 Cloudflare Worker URL 로 교체 (끝에 / 없이).
+// 예: 'https://icn-gate-proxy.your-subdomain.workers.dev'
+// 비워두면 실시간 조회는 꺼지고 기존 링크만 표시됩니다.
+const PROXY_BASE='';
+
 const GAPT={
   ICN:{n:'인천국제공항',
        D:'https://www.airport.kr/ap/ko/dep/depPasSchList.do',
@@ -921,7 +957,8 @@ function runGate(){
   const lo=flt.toLowerCase();
   const io_ko=io==='D'?'출발':'도착';
 
-  let h='<div class="g-hint"><b>'+flt+'</b> · '+io_ko
+  let h=(apt==='ICN'?'<div id="glBox"></div>':'')
+    +'<div class="g-hint"><b>'+flt+'</b> · '+io_ko
     +' — 아래에서 확인하세요. 게이트는 <b>공항 FIDS</b>가 가장 빠르고 정확합니다.</div>';
 
   h+='<button class="g-copy" id="gCopy">📋 '+flt+' 복사</button>';
@@ -949,6 +986,91 @@ function runGate(){
       });
     }catch(e){toast('복사를 지원하지 않는 환경입니다');}
   };
+
+  if(apt==='ICN') loadGate(flt,io);
+}
+
+/* ───────── 인천공항 실시간 게이트 조회 ───────── */
+function loadGate(flight,io){
+  const box=$('glBox'); if(!box)return;
+  if(!PROXY_BASE){
+    box.innerHTML='<div class="gl-empty">실시간 게이트 조회를 켜려면 <b>PROXY_BASE</b>를 설정하세요 '
+      +'(proxy/README.md 참고). 지금은 아래 링크로 확인하세요.</div>';
+    return;
+  }
+  box.innerHTML='<div class="gl-loading">● 인천공항 운항정보 조회 중…</div>';
+  fetch(PROXY_BASE+'/?flight='+encodeURIComponent(flight)+'&io='+io)
+    .then(r=>r.json())
+    .then(d=>renderGate(box,d,flight,io))
+    .catch(e=>{box.innerHTML='<div class="gl-err">조회 실패 — 네트워크 또는 프록시 상태를 확인하세요.<br>'
+      +'('+String(e).slice(0,80)+')</div>';});
+}
+
+const pad2=s=>String(s).padStart(2,'0');
+function fmtDT(s){                       // 'YYYYMMDDHHMM' → 파싱
+  if(!s||s.length<12)return null;
+  return {ymd:s.slice(0,8), date:s.slice(4,6)+'/'+s.slice(6,8),
+    time:s.slice(8,10)+':'+s.slice(10,12), num:Number(s)};
+}
+function termName(t){
+  return t==='P01'?'제1터미널 T1':t==='P02'?'제2터미널 T2':t==='P03'?'탑승동':(t||'—');
+}
+function statusClass(remark){
+  if(!remark)return '';
+  if(/지연|결항|취소|Delay|Cancel/i.test(remark))return 'stop';
+  if(/마감|Final|Closed/i.test(remark))return 'warn';
+  if(/출발|도착|탑승|Boarding|Departed|Arrived|Gate/i.test(remark))return 'go';
+  return '';
+}
+function renderGate(box,d,flight,io){
+  if(d&&d.error){
+    box.innerHTML='<div class="gl-err">인천공항 API 오류: '+(d.resultMsg||d.error)+'</div>';
+    return;
+  }
+  const items=(d&&d.items)||[];
+  if(!items.length){
+    box.innerHTML='<div class="gl-empty"><b>'+flight+'</b> — 인천공항 조회기간(D-3~D+6)에 '
+      +(io==='D'?'출발':'도착')+' 정보가 없습니다. 편명을 확인하거나 아래 링크를 이용하세요.</div>';
+    return;
+  }
+  // 오늘 우선 → 없으면 가장 가까운 미래편 → 그것도 없으면 최근 과거편
+  const now=new Date();
+  const todayYmd=''+now.getFullYear()+pad2(now.getMonth()+1)+pad2(now.getDate());
+  const nowNum=Number(todayYmd+pad2(now.getHours())+pad2(now.getMinutes()));
+  const withDT=items.map(it=>({it,dt:fmtDT(it.scheduleDateTime)})).filter(x=>x.dt);
+  if(!withDT.length){box.innerHTML='<div class="gl-empty">시각 정보를 해석할 수 없습니다.</div>';return;}
+  let chosen=withDT.filter(x=>x.dt.ymd===todayYmd), dayLabel='';
+  if(!chosen.length){
+    const future=withDT.filter(x=>x.dt.num>=nowNum).sort((a,b)=>a.dt.num-b.dt.num);
+    if(future.length){chosen=[future[0]];dayLabel=future[0].dt.date;}
+    else{const past=withDT.slice().sort((a,b)=>b.dt.num-a.dt.num);chosen=[past[0]];dayLabel=past[0].dt.date+' 지난편';}
+  }
+  box.innerHTML=chosen.map(x=>gateCard(x.it,x.dt,io,dayLabel)).join('');
+}
+function gateCard(it,sdt,io,dayLabel){
+  const edt=fmtDT(it.estimatedDateTime);
+  const changed=edt&&sdt&&edt.num!==sdt.num;
+  const sc=statusClass(it.remark);
+  const dirKo=io==='D'?'출발 →':'도착 ←';
+  const cells=[['TERMINAL',termName(it.terminalid),'md']];
+  if(io==='D') cells.push(['CHECK-IN',it.chkinrange||'—','md']);
+  else{cells.push(['BAGGAGE',it.carousel||'—','md']);cells.push(['EXIT',it.exitnumber||'—','md']);}
+  const cellHtml=cells.map(c=>'<div class="gl-cell"><div class="gl-cap">'+c[0]
+    +'</div><div class="gl-val '+c[2]+'">'+c[1]+'</div></div>').join('');
+  return '<div class="gl-card">'
+    +'<div class="gl-top"><span class="gl-flt">'+(it.flightId||'')
+      +(dayLabel?'<span class="gl-datebadge">'+dayLabel+'</span>':'')+'</span>'
+    +'<span class="gl-status '+sc+'">'+(it.remark||'예정')+'</span></div>'
+    +'<div class="gl-route">'+dirKo+' <b>'+(it.airport||'')+'</b> ('+(it.airportCode||'')+') · '
+      +(it.airline||'')+'</div>'
+    +'<div class="gl-grid">'
+    +'<div class="gl-cell hero"><div class="gl-cap">GATE</div><div class="gl-val">'+(it.gatenumber||'—')+'</div></div>'
+    +cellHtml
+    +'</div>'
+    +'<div class="gl-times"><span>SCHED <b>'+(sdt?sdt.time:'--:--')+'</b></span>'
+    +'<span class="'+(changed?'chg':'')+'">EST '+(edt?'<b>'+edt.time+'</b>':'--:--')
+      +(changed?' ▲변경':'')+'</span></div>'
+    +'</div>';
 }
 
 /* ───────── 교대 계산기 ───────── */
