@@ -6,15 +6,16 @@
 <title>T/O TIMER — 이륙 감지 알람</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Orbitron:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Orbitron:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0B0F17; --panel:#121926; --panel2:#0E141F; --line:#22304A;
   --amber:#FFB300; --amber-dim:#8a6200; --green:#4ADE80; --red:#FF5C5C;
   --text:#E8EDF5; --dim:#7C8BA3;
-  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --mono:"Orbitron","IBM Plex Sans KR",sans-serif;   /* 기술 텍스트 영문 폰트 (한글은 Plex Sans KR 폴백) */
+  --num:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace; /* 고정폭 — 매초 바뀌는 타이머용(흔들림 방지) */
   --sans:"IBM Plex Sans KR",-apple-system,system-ui,sans-serif;
-  --btn:"Orbitron","IBM Plex Sans KR",sans-serif;  /* 버튼 영문 폰트 (한글은 Plex Sans KR 폴백) */
+  --btn:"Orbitron","IBM Plex Sans KR",sans-serif;  /* 버튼 영문 폰트 */
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -88,7 +89,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:6px
 .mon-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 18px;text-align:center;margin-top:18px}
 .mon-title{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--amber);animation:blink 1.6s infinite}
 @keyframes blink{50%{opacity:.35}}
-.g-val{font-family:var(--mono);font-size:44px;font-weight:700;margin:14px 0 6px}
+.g-val{font-family:var(--num);font-size:44px;font-weight:700;margin:14px 0 6px}
 .g-unit{font-size:14px;color:var(--dim);font-weight:400}
 .g-bar{height:10px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);overflow:hidden;margin:12px 0 6px}
 .g-fill{height:100%;width:0%;background:linear-gradient(90deg,#3d5a80,var(--amber));transition:width .12s}
@@ -104,11 +105,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:6px
 /* ── airborne ───────────────────── */
 .air-head{text-align:center;margin-top:22px}
 .air-tag{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:#2d7a4a}
-.air-elapsed{font-family:var(--mono);font-size:52px;font-weight:700;margin-top:6px;color:#3a4a5c}
+.air-elapsed{font-family:var(--num);font-size:52px;font-weight:700;margin-top:6px;color:#3a4a5c}
 .air-sub{font-size:12px;color:#2a3548;margin-top:2px}
 .cd{background:#0a0e15;border:1px solid #1a2336;border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
 .cd .lbl{font-family:var(--mono);font-size:12px;color:#2a3548}
-.cd .rem{font-family:var(--mono);font-size:26px;font-weight:700;color:#3a4a5c}
+.cd .rem{font-family:var(--num);font-size:26px;font-weight:700;color:#3a4a5c}
 .cd.done{border-color:#1a4a2a}
 .cd.done .rem{color:#2d7a4a}
 .cd.ringing{border-color:var(--red);animation:ring .5s infinite}
@@ -452,7 +453,7 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
           </div>
         </div>
         <div class="w-box">
-          <div class="w-cap">FINAL RESERVE</div>
+          <div class="w-cap">FINAL RES.</div>
           <div class="w-field">
             <input type="number" class="w-input" id="fRes" min="0" max="99" value="5.5" step="0.1" inputmode="decimal">
             <span class="w-unit">Klbs</span>
