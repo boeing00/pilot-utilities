@@ -17,7 +17,10 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{
-  background:var(--bg); color:var(--text); font-family:var(--sans);
+  background:var(--bg);
+  background-image:radial-gradient(130% 70% at 50% -12%, #14203300 0%, #14203300 0%),
+                   radial-gradient(120% 60% at 50% -8%, #17233a 0%, rgba(11,15,23,0) 58%);
+  color:var(--text); font-family:var(--sans);
   display:flex; justify-content:center; overscroll-behavior:none;
 }
 .app{width:100%;max-width:430px;min-height:100dvh;display:flex;flex-direction:column;padding:16px 16px 32px}
@@ -134,9 +137,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:6px
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 18px;font-size:13px;color:var(--text);display:none;z-index:60}
 
 /* ── tabs ───────────────────────── */
-.tabs{display:flex;gap:5px;margin-top:12px}
-.tab{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:10px 2px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--dim);cursor:pointer;transition:.15s;white-space:nowrap}
-.tab.on{background:var(--panel);color:var(--amber);border-color:var(--amber-dim)}
+.tabs{display:flex;gap:6px;margin-top:14px}
+.tab{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:.02em;padding:11px 2px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--dim);cursor:pointer;transition:.18s;white-space:nowrap}
+.tab:active{transform:scale(.96)}
+.tab.on{background:linear-gradient(180deg,#1c2740,#141d2e);color:var(--amber);border-color:var(--amber-dim);box-shadow:0 0 0 1px var(--amber-dim) inset,0 2px 10px rgba(0,0,0,.25)}
 body.calc .phase{display:none!important}
 #pCalc{display:none;flex-direction:column;flex:1}
 body.calc #pCalc{display:flex}
@@ -211,6 +215,7 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
 .gl-empty b{color:var(--text)}
 .gl-err{font-family:var(--mono);font-size:11.5px;color:var(--red);text-align:center;
   padding:12px;border:1px solid #6b2020;border-radius:12px;margin-bottom:12px;line-height:1.6}
+.g-note{font-size:11.5px;line-height:1.7;color:var(--dim);margin-top:16px;padding:2px}
 
 /* ── calc inputs (소형 휠) ───────── */
 .calc-inputs{display:flex;gap:8px;margin-top:4px}
@@ -256,6 +261,13 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
 .w-input.sm{font-size:15px;width:52px}
 .w-unit{font-family:var(--mono);font-size:12px;color:var(--dim)}
 .w-sep{font-family:var(--mono);font-size:14px;color:var(--dim);padding:0 2px}
+
+/* fuel 입력 3칸이 좁은 폰에서 넘치지 않도록 축소 (Klbs 잘림 방지) */
+#pFuel .w-row{gap:6px}
+#pFuel .w-box{padding:12px 6px;gap:7px}
+#pFuel .w-field{gap:3px}
+#pFuel .w-input{width:48px;font-size:16px;padding:8px 2px}
+#pFuel .w-unit{font-size:10px}
 
 /* result cards */
 .wr{background:var(--panel);border-radius:14px;border:1px solid var(--line);padding:16px;margin-bottom:12px}
@@ -409,7 +421,7 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
             <input type="number" class="w-input sm" id="wDirTo" min="0" max="360" value="310" inputmode="numeric">
             <span class="w-unit">°</span>
           </div>
-          <div class="w-cap" style="margin-top:2px">단일 방향이면 같은 값 입력</div>
+          <div class="w-cap" style="margin-top:2px">단일 방향이면 동일값</div>
         </div>
         <div class="w-box">
           <div class="w-cap">SPEED</div>
