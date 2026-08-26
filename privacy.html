@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>개인정보처리방침 · Pilot Utilities</title>
+<style>
+  :root{
+    --bg:#0A0E14; --card:#121822; --line:#1E2836;
+    --text:#E6EAF0; --dim:#8A97A8; --amber:#F3D77E; --green:#4ADE80;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:32px 20px 64px; background:var(--bg); color:var(--text);
+    font-family:"Titillium Web","Segoe UI",-apple-system,"Malgun Gothic",sans-serif;
+    line-height:1.75; -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:760px; margin:0 auto}
+  h1{font-size:28px; color:var(--amber); margin:0 0 4px; letter-spacing:.5px}
+  .sub{color:var(--dim); font-size:14px; margin:0 0 28px}
+  h2{font-size:18px; color:var(--amber); margin:34px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line)}
+  h3{font-size:15px; color:var(--text); margin:20px 0 6px}
+  p,li{font-size:15px; color:var(--text)}
+  ul{padding-left:20px}
+  li{margin:5px 0}
+  code{background:var(--card); padding:2px 6px; border-radius:4px; font-size:13.5px; color:var(--green); word-break:break-all}
+  a{color:var(--green)}
+  table{width:100%; border-collapse:collapse; margin:12px 0; font-size:14px}
+  th,td{border:1px solid var(--line); padding:9px 11px; text-align:left; vertical-align:top}
+  th{background:var(--card); color:var(--amber); font-weight:600}
+  .box{background:var(--card); border-radius:10px; padding:16px 18px; margin:16px 0}
+  .note{color:var(--dim); font-size:13.5px}
+  hr{border:0; border-top:1px solid var(--line); margin:56px 0 36px}
+  footer{color:var(--dim); font-size:13px; margin-top:40px; text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>개인정보처리방침</h1>
+<p class="sub">Pilot Utilities · 최종 수정일 2026년 8월 26일 · 시행일 2026년 8월 26일</p>
+
+<div class="box">
+<p style="margin:0"><strong>요약:</strong> Pilot Utilities는 회원가입이 없으며, 이름·이메일·전화번호·연락처·사진·정밀 위치 등 개인을 식별할 수 있는 정보를 수집하거나 서버에 저장하지 않습니다. 앱이 외부로 보내는 것은 사용자가 직접 입력한 <strong>편명·공항 코드</strong>뿐이며, 이는 운항·기상 정보 조회에만 사용됩니다. 다만 앱 하단에 표시되는 배너 광고를 위해 Google AdMob이 광고 ID 등을 수집할 수 있습니다.</p>
+</div>
+
+<h2>1. 개요</h2>
+<p>Pilot Utilities(이하 "본 앱")는 조종사의 비행 전·중 업무를 돕기 위한 개인 개발 유틸리티 앱입니다. 본 방침은 본 앱이 어떤 정보를 다루고, 어디로 보내며, 어떻게 보관하는지를 설명합니다.</p>
+<ul>
+  <li>앱 이름: Pilot Utilities</li>
+  <li>패키지명: <code>com.msyim.pilotutilities</code></li>
+  <li>개발자: 개인 개발자</li>
+  <li>문의: <a href="mailto:moonsikyim@gmail.com">moonsikyim@gmail.com</a></li>
+</ul>
+
+<h2>2. 수집하지 않는 정보</h2>
+<p>본 앱은 다음 정보를 <strong>일절 수집하지 않습니다.</strong></p>
+<ul>
+  <li>이름, 생년월일, 성별 등 신원 정보</li>
+  <li>이메일 주소, 전화번호, 주소</li>
+  <li>계정 정보 (본 앱은 회원가입·로그인 기능이 없습니다)</li>
+  <li>연락처, 통화 기록, 문자메시지</li>
+  <li>사진, 동영상, 오디오 녹음, 기기 내 파일</li>
+  <li>GPS 등 정밀 위치 정보 (본 앱은 위치 권한을 요청하지 않습니다)</li>
+  <li>결제·금융 정보</li>
+</ul>
+
+<h2>3. 기기 안에서만 처리되는 정보</h2>
+<h3>3.1 가속도 센서 (TAKEOFF TIMER 기능)</h3>
+<p>이륙 순간을 감지하기 위해 기기의 가속도 센서 값을 읽습니다. 이 값은 <strong>기기 내부에서만 실시간으로 계산</strong>되며, 저장되지도 외부로 전송되지도 않습니다.</p>
+
+<h3>3.2 사용자 설정값</h3>
+<p>이륙 후 알람이 울릴 지연 시간 설정이 기기 내부 저장소에 저장됩니다. 이 값은 외부로 전송되지 않으며, 앱을 삭제하면 함께 삭제됩니다.</p>
+
+<h2>4. 외부 서비스로 전송되는 정보</h2>
+<p>GATE 탭에서 사용자가 <strong>직접 입력한 편명 또는 공항 ICAO 코드</strong>는 실시간 운항·기상 정보를 조회하기 위해 아래 서비스로 전송됩니다. 전송되는 내용은 편명·공항 코드와, 통신에 기술적으로 수반되는 IP 주소·기기 종류 정보입니다.</p>
+<table>
+  <tr><th>전송 대상</th><th>목적</th><th>비고</th></tr>
+  <tr>
+    <td><code>icn-gate-proxy.boeing00.workers.dev</code></td>
+    <td>인천공항 실시간 게이트·터미널 정보 조회</td>
+    <td>개발자가 운영하는 중계 서버(Cloudflare Worker). 조회 내용을 저장하지 않으며, 공공데이터포털(data.go.kr) 인증키를 앱에 노출하지 않기 위해 사용합니다.</td>
+  </tr>
+  <tr>
+    <td><code>api.adsbdb.com</code></td>
+    <td>편명 → 출발/도착 공항 노선 조회</td>
+    <td>제3자 공개 API</td>
+  </tr>
+  <tr>
+    <td><code>aviationweather.gov</code></td>
+    <td>목적지 공항 METAR 기상 정보 조회</td>
+    <td>미국 항공기상 공개 API (NOAA/NWS)</td>
+  </tr>
+</table>
+<p class="note">개발자는 위 조회 내역을 별도로 수집·저장하지 않으며, 제3자에게 판매하거나 제공하지 않습니다. 편명·공항 코드는 그 자체로 개인을 식별할 수 있는 정보가 아닙니다.</p>
+<p class="note">운항 정보의 원 출처: 인천국제공항공사 (공공데이터포털 data.go.kr)</p>
+
+<h2>5. 광고 (Google AdMob)</h2>
+<p>본 앱은 무료로 제공되며, 운영 비용을 충당하기 위해 화면 하단에 Google AdMob 배너 광고를 표시합니다. 이를 위해 Google Mobile Ads SDK가 탑재되어 있으며, Google은 광고 게재·측정·사기 방지를 위해 다음 정보를 수집·이용할 수 있습니다.</p>
+<ul>
+  <li>광고 ID (Android Advertising ID, AAID)</li>
+  <li>기기 모델·OS 버전 등 기기 정보</li>
+  <li>IP 주소에 기반한 대략적인 위치 (도시 수준)</li>
+  <li>광고 노출·클릭 등 광고 상호작용 기록</li>
+</ul>
+<p>이 정보는 Google이 자체 개인정보처리방침에 따라 처리하며, 개발자는 해당 정보에 직접 접근하지 않습니다. 자세한 내용은 아래를 참고하세요.</p>
+<ul>
+  <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google 개인정보처리방침</a></li>
+  <li><a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google 광고에서의 데이터 사용 방식</a></li>
+</ul>
+<h3>맞춤 광고를 원하지 않으시면</h3>
+<p>Android 기기에서 <strong>설정 &gt; 보안 및 개인정보 보호 &gt; 개인정보 보호 &gt; 광고</strong> (기기에 따라 <strong>설정 &gt; Google &gt; 광고</strong>) 로 이동하여 <strong>광고 ID 삭제</strong> 또는 <strong>맞춤 광고 선택 해제</strong>를 하실 수 있습니다.</p>
+
+<h2>6. 앱이 요청하는 권한과 사용 목적</h2>
+<table>
+  <tr><th>권한</th><th>사용 목적</th></tr>
+  <tr><td>인터넷 (INTERNET)</td><td>운항·기상 정보 조회 및 광고 표시</td></tr>
+  <tr><td>포그라운드 서비스 (FOREGROUND_SERVICE / SPECIAL_USE)</td><td>비행 중 화면이 꺼져 있어도 이륙 감지와 알람이 끊기지 않도록 유지</td></tr>
+  <tr><td>알림 (POST_NOTIFICATIONS)</td><td>이륙 후 설정한 시간에 알람 알림 표시</td></tr>
+  <tr><td>진동 (VIBRATE)</td><td>알람 시 진동</td></tr>
+  <tr><td>절전 모드 해제 (WAKE_LOCK)</td><td>알람이 정확한 시각에 울리도록 보장</td></tr>
+  <tr><td>배터리 최적화 제외 요청</td><td>장시간 비행 중 시스템이 감시 기능을 종료하지 않도록 사용자에게 설정을 안내</td></tr>
+  <tr><td>부팅 완료 수신 (RECEIVE_BOOT_COMPLETED)</td><td>기기 재시작 후 진행 중이던 감시 기능 복원</td></tr>
+  <tr><td>알람 설정 (SET_ALARM)</td><td>사용자가 원할 경우 기기 기본 알람 앱에 알람 등록</td></tr>
+</table>
+<p class="note">본 앱은 위치, 카메라, 마이크, 연락처, 저장소 권한을 요청하지 않습니다.</p>
+
+<h2>7. 아동의 개인정보</h2>
+<p>본 앱은 만 13세 미만(대한민국 기준 만 14세 미만) 아동을 대상으로 하지 않으며, 아동의 개인정보를 고의로 수집하지 않습니다. 아동의 정보가 수집된 사실을 알게 될 경우 즉시 삭제 조치하겠습니다.</p>
+
+<h2>8. 보관 및 파기</h2>
+<p>본 앱은 사용자 계정이나 개발자 측 데이터베이스를 운영하지 않습니다. 앱이 생성하는 모든 데이터(알람 설정값)는 사용자 기기에만 존재하며, <strong>앱을 삭제하면 즉시 함께 삭제</strong>됩니다.</p>
+
+<h2>9. 이용자의 권리</h2>
+<p>본 앱은 개인정보를 보관하지 않으므로 별도의 열람·정정·삭제 요청 절차가 필요하지 않습니다. 다만 본 방침이나 데이터 처리에 관한 문의는 아래 이메일로 언제든 보내주시면 30일 이내에 답변드립니다.</p>
+
+<h2>10. 방침의 변경</h2>
+<p>본 방침이 변경될 경우 변경 내용과 시행일을 본 페이지에 게시합니다. 중요한 변경 사항은 앱 업데이트 시 안내합니다.</p>
+
+<h2>11. 문의처</h2>
+<p>이메일: <a href="mailto:moonsikyim@gmail.com">moonsikyim@gmail.com</a></p>
+
+<hr>
+
+<h1 style="font-size:24px">Privacy Policy (English)</h1>
+<p class="sub">Pilot Utilities · Last updated 26 August 2026</p>
+
+<p><strong>Summary:</strong> Pilot Utilities has no user accounts and does not collect or store any personally identifiable information such as your name, email, phone number, contacts, photos, or precise location. The only data it sends off the device is the flight number or airport code you type yourself, used solely to look up flight and weather information. Google AdMob, which serves the banner ad at the bottom of the screen, may collect an advertising identifier as described below.</p>
+
+<h2>Information we do not collect</h2>
+<p>No identity information, no email or phone number, no account credentials (the app has no sign-up), no contacts, no photos or files, no GPS/precise location (the app never requests location permission), and no payment information.</p>
+
+<h2>Processed on your device only</h2>
+<ul>
+  <li><strong>Accelerometer readings</strong> are used to detect the moment of takeoff. They are evaluated in real time on the device, never stored and never transmitted.</li>
+  <li><strong>Your alarm delay settings</strong> are saved in the app's local storage and are removed when you uninstall the app.</li>
+</ul>
+
+<h2>Information sent to external services</h2>
+<p>The flight number or ICAO airport code you enter on the GATE tab is sent to the following services to retrieve live flight and weather data. Such requests also carry your IP address as a technical necessity of any internet connection.</p>
+<ul>
+  <li><code>icn-gate-proxy.boeing00.workers.dev</code> — a relay server operated by the developer (Cloudflare Worker) for Incheon Airport live gate/terminal data. It does not store request contents; it exists so the data.go.kr API key is never shipped inside the app.</li>
+  <li><code>api.adsbdb.com</code> — resolves a flight number to its origin/destination airports.</li>
+  <li><code>aviationweather.gov</code> — retrieves destination METAR weather (NOAA/NWS public API).</li>
+</ul>
+<p class="note">The developer does not log, store, sell, or share these lookups. Flight numbers and airport codes are not personally identifying by themselves. Flight data source: Incheon International Airport Corporation, via data.go.kr.</p>
+
+<h2>Advertising</h2>
+<p>The app is free and displays a Google AdMob banner. The Google Mobile Ads SDK may collect your Android Advertising ID (AAID), device model and OS version, coarse (city-level) location derived from your IP address, and ad interaction events, in order to serve and measure ads and prevent fraud. This data is handled by Google under its own privacy policy; the developer has no direct access to it. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a> and <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">How Google uses data in advertising</a>.</p>
+<p>To opt out of personalised ads, go to <strong>Settings &gt; Privacy &gt; Ads</strong> on your Android device and delete or reset your advertising ID.</p>
+
+<h2>Permissions</h2>
+<p>Internet (data lookups and ads), foreground service / special use (keeps takeoff detection and alarms running with the screen off during flight), notifications (post-takeoff alarms), vibration, wake lock (accurate alarm timing), battery-optimisation exemption request (prevents the system killing monitoring on long flights), boot completed (restores monitoring after a restart), and set alarm (optional handoff to your device's clock app). The app requests no location, camera, microphone, contacts, or storage permissions.</p>
+
+<h2>Children</h2>
+<p>This app is not directed at children under 13 and does not knowingly collect information from them. If we learn that such information has been collected, we will delete it promptly.</p>
+
+<h2>Retention and deletion</h2>
+<p>There are no user accounts and no developer-side database. All data the app creates lives only on your device and is deleted when you uninstall the app.</p>
+
+<h2>Changes and contact</h2>
+<p>Any changes to this policy will be posted on this page with an effective date. Questions: <a href="mailto:moonsikyim@gmail.com">moonsikyim@gmail.com</a> (we reply within 30 days).</p>
+
+<footer>Pilot Utilities · com.msyim.pilotutilities · moonsikyim@gmail.com</footer>
+
+</div>
+</body>
+</html>
