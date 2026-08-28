@@ -1027,8 +1027,11 @@ function fmtDT(s){                       // 'YYYYMMDDHHMM' → 파싱
   return {ymd:s.slice(0,8), date:s.slice(4,6)+'/'+s.slice(6,8),
     time:s.slice(8,10)+':'+s.slice(10,12), num:Number(s)};
 }
+// P02 와 P03 을 뒤집어 쓰지 말 것. data.go.kr 명세와 실제 응답이 모두
+// P01=제1터미널, P02=탑승동(concourse), P03=제2터미널 이다 — 대한항공 KE037 은
+// 제2터미널에서 뜨는데 terminalid 로 P03 을 돌려준다.
 function termName(t){
-  return t==='P01'?'제1터미널 T1':t==='P02'?'제2터미널 T2':t==='P03'?'탑승동':(t||'—');
+  return t==='P01'?'제1터미널 T1':t==='P02'?'탑승동':t==='P03'?'제2터미널 T2':(t||'—');
 }
 function statusClass(remark){
   if(!remark)return '';
