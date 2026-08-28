@@ -20,12 +20,12 @@ compatibility_date = "2026-08-03"
 #
 # 1) 네임스페이스 생성 — 출력에 나오는 id 를 아래 id 자리에 붙여넣으세요:
 #      npx wrangler kv namespace create GATE_CACHE
-# 2) 아래 [[kv_namespaces]] 블록의 주석을 풀고 id 를 채웁니다.
+# 2) 아래 [[kv_namespaces]] 블록에 id 를 채웁니다. (2026-08-28 설정 완료)
 # 3) npx wrangler deploy
 #
 # 무료 한도: 읽기 100,000/일, 쓰기 1,000/일(하드 캡). 쓰기는 캐시 미스에서만
 # 발생하고, 한도를 넘겨 실패해도 사용자 응답에는 영향이 없도록 처리돼 있습니다.
 #
-# [[kv_namespaces]]
-# binding = "GATE_CACHE"
-# id = "<npx wrangler kv namespace create GATE_CACHE 출력의 id>"
+[[kv_namespaces]]
+binding = "GATE_CACHE"
+id = "a1d7a952e7b24d43aa2fc1ee3facea46"
