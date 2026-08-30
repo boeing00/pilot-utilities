@@ -313,6 +313,18 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
 .f-cost-row .fv.krw{color:#5B9BD5}
 .f-price-note{font-family:var(--mono);font-size:10px;color:#2a3548;margin:10px 4px 0;line-height:1.5}
 
+/* ── 광고 (Kakao AdFit) ─────────────
+   애드핏 SDK는 슬롯이 화면상 '보이는' 상태여야 광고를 채운다
+   (부모가 display:none 이면 "Cannot visible ad on screen" 만 찍히고 호출 자체를 안 함).
+   그래서 컨테이너는 항상 레이아웃하고, 미노출이면 ins 가 display:none 이라 높이 0.
+   여백은 ins 자신에 걸어 광고가 없으면 여백까지 함께 사라지게 한다. */
+.adbox{display:block;text-align:center;line-height:0}
+.adbox ins.kakao_ad_area{margin:22px auto 4px;max-width:100%;text-decoration:none}
+.adbox.on ins.kakao_ad_area{margin:6px auto 4px}
+.adbox .adlabel{display:none;font-family:var(--mono);font-size:9px;letter-spacing:.18em;
+  color:#2a3548;line-height:normal;margin:22px 0 0}
+.adbox.on .adlabel{display:block}
+
 /* ── footer ─────────────────────── */
 .app-footer{margin-top:auto;padding:28px 4px 4px;text-align:center;font-family:var(--mono);font-size:10px;color:#2a3548;line-height:1.8;border-top:1px solid var(--line)}
 .app-footer a{color:#3a5a7a;text-decoration:none}
@@ -519,9 +531,21 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
     </p>
   </section>
 
+  <!-- ====== 광고 · Kakao AdFit (푸터 위) ======
+       미노출(NO-AD)이면 ins 가 display:none 인 채로 남아 높이 0 — 화면에 흔적이 없다. -->
+  <div class="adbox" id="adBox">
+    <div class="adlabel">SPONSORED</div>
+    <ins class="kakao_ad_area" style="display:none;width:100%;"
+         data-ad-unit="DAN-XXXXXXXXXXXXXXXX"
+         data-ad-width="320"
+         data-ad-height="100"
+         data-ad-onfail="adfitOnFail"></ins>
+  </div>
+
   <footer class="app-footer">
     <p>© 2026 Utilities for Pilot. All rights reserved.</p>
     <p>Contact & Inquiry: <a href="mailto:moonsikyim@gmail.com">moonsikyim@gmail.com</a></p>
+    <p><a href="privacy.html">개인정보처리방침</a></p>
   </footer>
 
 </div>
@@ -1413,5 +1437,29 @@ async function fetchFuelPrice(){
     +`${currentKRW?' · 환율 실시간 조회 ₩'+currentKRW+'/USD':' · ₩'+USD_KRW+'/USD (참조값)'}`;
 }
 </script>
+
+<!-- ====== Kakao AdFit 로더 ======
+     ba.min.js 는 ins 태그가 DOM 에 있을 때 자동으로 광고를 채우고 display 를 푼다.
+     라벨은 실제로 채워졌을 때만 붙이려고 style 변화를 관찰한다(타임아웃 없음).
+     관찰이 실패해도 여백은 ins 에 걸려 있어 레이아웃은 정상. -->
+<script>
+function adfitOnFail(el){                     // NO-AD 콜백 (ins 객체가 인자)
+  var box = document.getElementById("adBox");
+  if (box) box.classList.remove("on");        // 라벨·여백 제거 (컨테이너 자체는 유지)
+}
+(function(){
+  var box = document.getElementById("adBox");
+  var ins = box && box.querySelector("ins.kakao_ad_area");
+  if (!ins || !window.MutationObserver) return;
+  var mo = new MutationObserver(function(){
+    if (ins.style.display && ins.style.display !== "none"){
+      box.classList.add("on");
+      mo.disconnect();
+    }
+  });
+  mo.observe(ins, { attributes:true, attributeFilter:["style"] });
+})();
+</script>
+<script async type="text/javascript" charset="utf-8" src="https://t1.kakaocdn.net/kas/static/ba.min.js"></script>
 </body>
 </html>
