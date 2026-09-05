@@ -318,7 +318,9 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
    (부모가 display:none 이면 "Cannot visible ad on screen" 만 찍히고 호출 자체를 안 함).
    그래서 컨테이너는 항상 레이아웃하고, 미노출이면 ins 가 display:none 이라 높이 0.
    여백은 ins 자신에 걸어 광고가 없으면 여백까지 함께 사라지게 한다. */
-.adbox{display:block;text-align:center;line-height:0}
+/* 폭을 선언 사이즈(320)로 묶는다 — 애드핏 SDK 가 ins 에 width:100% 를 강제로 얹기 때문에
+   컨테이너가 넓으면 320x100 소재가 그만큼 가로로 늘어난다(실측: 351x100). */
+.adbox{display:block;text-align:center;line-height:0;max-width:320px;margin-left:auto;margin-right:auto}
 .adbox ins.kakao_ad_area{margin:22px auto 4px;max-width:100%;text-decoration:none}
 .adbox.on ins.kakao_ad_area{margin:6px auto 4px}
 .adbox .adlabel{display:none;font-family:var(--mono);font-size:9px;letter-spacing:.18em;
