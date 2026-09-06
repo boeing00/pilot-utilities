@@ -520,7 +520,7 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
       </div>
     </div>
 
-    <button class="btn btn-arm" id="gBtn" style="margin-top:6px">바로가기 생성 ▸</button>
+    <button class="btn btn-arm" id="gBtn" style="margin-top:6px">Search ▸</button>
 
     <div id="gOut"></div>
 
@@ -956,17 +956,6 @@ let gIO='D', gateInit=false;
 // 비워두면 실시간 조회는 꺼지고 기존 링크만 표시됩니다.
 const PROXY_BASE='https://icn-gate-proxy.boeing00.workers.dev';
 
-const GAPT={
-  ICN:{n:'인천국제공항',
-       D:'https://www.airport.kr/ap/ko/dep/depPasSchList.do',
-       A:'https://www.airport.kr/ap/ko/arr/arrPasSchList.do'},
-  GMP:{n:'김포국제공항', D:'https://www.airport.co.kr/gimpo/index.do', A:'https://www.airport.co.kr/gimpo/index.do'},
-  PUS:{n:'김해국제공항', D:'https://www.airport.co.kr/gimhae/index.do', A:'https://www.airport.co.kr/gimhae/index.do'},
-  CJU:{n:'제주국제공항', D:'https://www.airport.co.kr/jeju/index.do', A:'https://www.airport.co.kr/jeju/index.do'},
-  TAE:{n:'대구국제공항', D:'https://www.airport.co.kr/daegu/index.do', A:'https://www.airport.co.kr/daegu/index.do'},
-  CJJ:{n:'청주국제공항', D:'https://www.airport.co.kr/cheongju/index.do', A:'https://www.airport.co.kr/cheongju/index.do'}
-};
-
 function initGate(){
   if(gateInit)return; gateInit=true;
   $('gSeg').querySelectorAll('button').forEach(b=>{
@@ -994,24 +983,14 @@ function runGate(){
   if(!flt){toast('편명을 입력하세요');$('gOut').innerHTML='';return;}
   const apt=$('gApt').value, io=gIO;
   const q=encodeURIComponent(flt);
-  const lo=flt.toLowerCase();
   const io_ko=io==='D'?'출발':'도착';
 
   let h=(apt==='ICN'?'<div id="glBox"></div>':'')
     +'<div class="g-hint"><b>'+flt+'</b> · '+io_ko
-    +' — 아래에서 확인하세요. 게이트는 <b>공항 FIDS</b>가 가장 빠르고 정확합니다.</div>';
-
-  const a=GAPT[apt];
-  if(a) h+=gLink(a[io],'🛫',a.n+' '+io_ko+' 현황','공항 운영 원본 데이터 · 가장 빠름',true);
-  else  h+=gLink('https://www.google.com/search?q='+q+'+airport+official+site','🛫',
-                 '해당 공항 공식 FIDS 찾기','도착지 공항 홈페이지의 운항정보가 가장 정확',true);
+    +' — 아래 구글 검색에서 확인하세요.</div>';
 
   h+=gLink('https://www.google.com/search?q='+q,'🔍','구글 검색',
-           '편명 카드로 터미널·게이트·지연 즉시 표시');
-  h+=gLink('https://flightaware.com/live/flight/'+q,'📡','FlightAware',
-           '실시간 추적 · 게이트 및 예상시각');
-  h+=gLink('https://www.flightradar24.com/data/flights/'+encodeURIComponent(lo),'🌐','Flightradar24',
-           '항공기 위치 · 운항 이력');
+           '편명 카드로 터미널·게이트·지연 즉시 표시',true);
 
   $('gOut').innerHTML=h;
 
