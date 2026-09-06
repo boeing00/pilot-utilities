@@ -184,9 +184,6 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
 .g-lnk.pri .g-ttl{color:var(--amber)}
 .g-sub{font-size:11px;line-height:1.5;color:var(--dim)}
 .g-arw{font-family:var(--mono);font-size:14px;color:var(--dim);flex-shrink:0}
-.g-copy{width:100%;background:var(--panel2);border:1px dashed var(--line);border-radius:10px;
-  padding:11px;font-family:var(--mono);font-size:14px;color:var(--amber);letter-spacing:.08em;
-  cursor:pointer;margin-bottom:12px}
 
 /* ── live gate result (인천공항 API) ── */
 .gl-card{background:linear-gradient(135deg,#141c2b,#0e141f);border:1px solid var(--amber-dim);
@@ -1004,8 +1001,6 @@ function runGate(){
     +'<div class="g-hint"><b>'+flt+'</b> · '+io_ko
     +' — 아래에서 확인하세요. 게이트는 <b>공항 FIDS</b>가 가장 빠르고 정확합니다.</div>';
 
-  h+='<button class="g-copy" id="gCopy">📋 '+flt+' 복사</button>';
-
   const a=GAPT[apt];
   if(a) h+=gLink(a[io],'🛫',a.n+' '+io_ko+' 현황','공항 운영 원본 데이터 · 가장 빠름',true);
   else  h+=gLink('https://www.google.com/search?q='+q+'+airport+official+site','🛫',
@@ -1019,16 +1014,6 @@ function runGate(){
            '항공기 위치 · 운항 이력');
 
   $('gOut').innerHTML=h;
-
-  $('gCopy').onclick=()=>{
-    const t=$('gCopy');
-    try{
-      navigator.clipboard.writeText(flt).then(()=>{
-        t.textContent='✓ 복사됨'; toast(flt+' 복사됨');
-        setTimeout(()=>t.textContent='📋 '+flt+' 복사',1400);
-      });
-    }catch(e){toast('복사를 지원하지 않는 환경입니다');}
-  };
 
   if(apt==='ICN') loadGate(flt,io);
 }
