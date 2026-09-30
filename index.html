@@ -317,12 +317,22 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
    여백은 ins 자신에 걸어 광고가 없으면 여백까지 함께 사라지게 한다. */
 /* 폭을 선언 사이즈(320)로 묶는다 — 애드핏 SDK 가 ins 에 width:100% 를 강제로 얹기 때문에
    컨테이너가 넓으면 320x100 소재가 그만큼 가로로 늘어난다(실측: 351x100). */
-.adbox{display:block;text-align:center;line-height:0;max-width:320px;margin-left:auto;margin-right:auto}
-.adbox ins.kakao_ad_area{margin:22px auto 4px;max-width:100%;text-decoration:none}
-.adbox.on ins.kakao_ad_area{margin:6px auto 4px}
+/* 화면 하단 고정 바. 스크롤과 무관하게 늘 같은 자리에 있어(운영정책 5.3.1 "배치 공간 고정")
+   광고가 채워졌을 때만 배경·여백이 생기고, 그때 body 에 같은 높이의 아래 여백을 줘서
+   콘텐츠를 가리지 않는다. z-index 40 — 알람 오버레이(50)·시스템 모달(70)·토스트(60) 아래. */
+.adbox{position:fixed;left:0;right:0;bottom:0;z-index:40;max-width:320px;margin:0 auto;
+  text-align:center;line-height:0}
+.adbox.on{padding:3px 0 calc(4px + env(safe-area-inset-bottom))}
+.adbox.on::before{content:"";position:absolute;top:0;bottom:0;left:-100vw;right:-100vw;z-index:-1;
+  background:rgba(11,15,23,.96);border-top:1px solid var(--line)}
+.adbox ins.kakao_ad_area{margin:0 auto;max-width:100%;text-decoration:none}
 .adbox .adlabel{display:none;font-family:var(--mono);font-size:9px;letter-spacing:.18em;
-  color:#2a3548;line-height:normal;margin:22px 0 0}
+  color:#3a4a64;line-height:12px;margin:0 0 2px}
 .adbox.on .adlabel{display:block}
+/* body 가 height:100% 이고 .app 이 그 높이로 늘어나 내용이 넘치는 구조라 padding 은 먹지
+   않는다. 대신 .app 끝에 바 높이만큼의 빈 칸을 둔다 — 넘친 내용도 스크롤 범위에 들어간다. */
+html.ad-on .app::after{content:"";display:block;flex:none;height:calc(128px + env(safe-area-inset-bottom))}
+html.ad-on .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 
 /* ── footer ─────────────────────── */
 .app-footer{margin-top:auto;padding:28px 4px 4px;text-align:center;font-family:var(--mono);font-size:10px;color:#2a3548;line-height:1.8;border-top:1px solid var(--line)}
@@ -530,7 +540,7 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
     </p>
   </section>
 
-  <!-- ====== 광고 · Kakao AdFit (푸터 위) ======
+  <!-- ====== 광고 · Kakao AdFit (화면 하단 고정 바) ======
        이 광고단위는 애드핏 매체 "Utilities for Pilot"(boeing00.github.io/pilot-utilities)
        전용이다. 다른 사이트에서 재사용하면 부정 트래픽으로 잡히니 매체마다 새로 발급받을 것.
        미노출(NO-AD)이면 ins 가 display:none 인 채로 남아 높이 0 — 화면에 흔적이 없다. -->
@@ -1409,11 +1419,12 @@ async function fetchFuelPrice(){
 <!-- ====== Kakao AdFit 로더 ======
      ba.min.js 는 ins 태그가 DOM 에 있을 때 자동으로 광고를 채우고 display 를 푼다.
      라벨은 실제로 채워졌을 때만 붙이려고 style 변화를 관찰한다(타임아웃 없음).
-     관찰이 실패해도 여백은 ins 에 걸려 있어 레이아웃은 정상. -->
+     채워지면 html.ad-on 을 켜서 하단 고정 바가 콘텐츠를 가리지 않게 body 아래 여백을 준다. -->
 <script>
 function adfitOnFail(el){                     // NO-AD 콜백 (ins 객체가 인자)
   var box = document.getElementById("adBox");
-  if (box) box.classList.remove("on");        // 라벨·여백 제거 (컨테이너 자체는 유지)
+  if (box) box.classList.remove("on");        // 라벨·배경 제거 (컨테이너 자체는 유지)
+  document.documentElement.classList.remove("ad-on");  // 하단 여백도 회수
 }
 (function(){
   var box = document.getElementById("adBox");
@@ -1422,6 +1433,7 @@ function adfitOnFail(el){                     // NO-AD 콜백 (ins 객체가 인
   var mo = new MutationObserver(function(){
     if (ins.style.display && ins.style.display !== "none"){
       box.classList.add("on");
+      document.documentElement.classList.add("ad-on");  // 고정 바만큼 body 아래 여백
       mo.disconnect();
     }
   });
