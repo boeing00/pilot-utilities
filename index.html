@@ -2,6 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<script>/* 삼성 인터넷은 화면에 고정된 광고를 첫 스크롤 때 숨긴다(컨테이너 id·class 를 지우고 display:none,
+   2026-10-04 실측). 거기서만 하단 고정 대신 푸터 위 인라인 배너로 둔다. */
+if(/SamsungBrowser/i.test(navigator.userAgent))document.documentElement.classList.add("ad-inline");</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>T/O TIMER — 이륙 감지 알람</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -333,6 +336,12 @@ select.g-in{text-align:left;font-size:13px;-webkit-appearance:none;appearance:no
    않는다. 대신 .app 끝에 바 높이만큼의 빈 칸을 둔다 — 넘친 내용도 스크롤 범위에 들어간다. */
 html.ad-on .app::after{content:"";display:block;flex:none;height:calc(128px + env(safe-area-inset-bottom))}
 html.ad-on .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
+/* 삼성 인터넷(html.ad-inline): 고정 해제 — 본문 흐름 안, 푸터 바로 위 배너 */
+html.ad-inline .adbox{position:static;margin:16px auto 0}
+html.ad-inline .adbox.on{padding:3px 0 4px}
+html.ad-inline .adbox.on::before{content:none}
+html.ad-inline.ad-on .app::after{content:none}
+html.ad-inline.ad-on .toast{bottom:28px}
 
 /* ── footer ─────────────────────── */
 .app-footer{margin-top:auto;padding:28px 4px 4px;text-align:center;font-family:var(--mono);font-size:10px;color:#2a3548;line-height:1.8;border-top:1px solid var(--line)}
